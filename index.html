@@ -98,7 +98,30 @@
       border-radius: 6px;
       width: 100%;
     }
+    
+    @media (max-width: 600px) {
+      #container {
+        padding: 10px;
+      }
+      #upload {
+        font-size: 16px;
+      }
+      #cropBtn, #resetCropBoxBtn {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+    }
+    .slider-container {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .slider-container input[type="range"] {
+      width: 100%;
+    }
     </style>
+    
     
 </head>
 <body>
@@ -144,7 +167,13 @@
       font-weight: bold;
       cursor: pointer;
     ">全部清除</button>
+    
+    <div class="slider-container">
+      <label for="scaleSlider" style="font-size: 14px; color: black;">裁切區縮放</label>
+      <input type="range" id="scaleSlider" min="50" max="1000" step="10" value="320">
+    </div>
     <div id="preview"></div>
+    
     
   </div>
 
@@ -155,7 +184,17 @@
       count = 0;
       countDisplay.textContent = '目前裁切張數：0';
     });
+    
+    // 裁切框滑桿微調功能
+    const slider = document.getElementById('scaleSlider');
+    slider.addEventListener('input', function () {
+      const size = parseInt(slider.value);
+      if (cropper) {
+        cropper.setCropBoxData({ width: size, height: size });
+      }
+    });
     </script>
+    
     
 
   <script>
@@ -264,7 +303,17 @@
       count = 0;
       countDisplay.textContent = '目前裁切張數：0';
     });
+    
+    // 裁切框滑桿微調功能
+    const slider = document.getElementById('scaleSlider');
+    slider.addEventListener('input', function () {
+      const size = parseInt(slider.value);
+      if (cropper) {
+        cropper.setCropBoxData({ width: size, height: size });
+      }
+    });
     </script>
+    
     
 </body>
 </html>
