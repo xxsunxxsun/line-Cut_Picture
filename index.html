@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -90,27 +89,74 @@
     #cropBtn:hover {
       background-color: #c62828;
     }
-  </style>
+  
+    #title {
+      background-color: #3399FF;
+      color: black;
+      text-align: center;
+      padding: 10px;
+      border-radius: 6px;
+      width: 100%;
+    }
+    </style>
+    
 </head>
 <body>
 
-  <div id="container">
+  
+    <div id="container">
+          
     <div id="header">
-      <h2>圖片裁剪工具</h2>
+      <h2 id="title">圖片裁剪工具</h2>
       <div id="countDisplay">目前裁切張數：0</div>
     </div>
     <input type="file" id="upload" accept="image/*">
     <br><br>
-    <button id="cropBtn">裁剪圖片</button>
+    
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <button id="cropBtn">裁剪圖片</button>
+      <div id="sizeInfo" style="display: none;
+        margin-left: 10px;
+        padding: 6px 12px;
+        background-color: #90ee90;
+        color: black;
+        border-radius: 5px;
+        font-weight: bold;
+        font-size: 12px;
+        height: 100%;
+      "></div>
+    </div>
+    
     <div>
       <img id="image" style="max-width: 100%; display: none;">
     </div>
 
     <h3>裁剪結果：</h3>
+    
+    <button id="clearBtn" style="
+      margin-top: 10px;
+      margin-bottom: 20px;
+      padding: 8px 16px;
+      background-color: black;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    ">全部清除</button>
     <div id="preview"></div>
+    
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js">
+    // 全部清除按鈕功能
+    document.getElementById('clearBtn').addEventListener('click', function () {
+      preview.innerHTML = '';
+      count = 0;
+      countDisplay.textContent = '目前裁切張數：0';
+    });
+    </script>
+    
 
   <script>
     let cropper;
@@ -132,7 +178,32 @@
 
         if (cropper) cropper.destroy();
 
-        cropper = new Cropper(image, {
+        
+    
+    cropper = new Cropper(image, {
+      viewMode: 1,
+      dragMode: 'none',
+      zoomable: false,
+      scalable: false,
+      rotatable: false,
+      cropBoxMovable: true,
+      cropBoxResizable: true,
+      ready() {
+        cropper.setCropBoxData({
+          width: 320,
+          height: 320
+        });
+      },
+      crop(event) {
+        const info = document.getElementById('sizeInfo');
+        info.textContent = `尺寸：320 x 320 像素`;
+      },
+    
+      crop(event) {
+        const info = document.getElementById('sizeInfo');
+        info.textContent = `尺寸：320 x 320 像素`;
+      },
+    
           viewMode: 1,
           dragMode: 'none',
           zoomable: false,
@@ -140,7 +211,13 @@
           rotatable: false,
           cropBoxMovable: true,
           cropBoxResizable: true,
-          ready() {
+          
+    ready() {
+      cropper.setCropBoxData({
+        width: 320,
+        height: 320
+      });
+    
             cropper.setCropBoxData({
               width: 320,
               height: 320
@@ -172,14 +249,22 @@
         const link = document.createElement('a');
         link.className = 'downloadBtn';
         count++;
-        link.download = `cropped-image-${count}.png`;
-        link.textContent = `⬇ 下載圖片 ${count}`;
+        link.download = 'picture.png';
+        link.textContent = '⬇ 下載圖片';
         link.href = URL.createObjectURL(blob);
         block.appendChild(link);
         preview.appendChild(block);
         countDisplay.textContent = `目前裁切張數：${count}`;
       }, 'image/png');
     });
-  </script>
+  
+    // 全部清除按鈕功能
+    document.getElementById('clearBtn').addEventListener('click', function () {
+      preview.innerHTML = '';
+      count = 0;
+      countDisplay.textContent = '目前裁切張數：0';
+    });
+    </script>
+    
 </body>
 </html>
