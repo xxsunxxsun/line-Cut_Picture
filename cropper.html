@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>LINE 貼圖上傳裁切工具</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap" rel="stylesheet">
+  
+
+
+
+
+
+
+
+
+
+
+<style>
+    body {
+      font-family: Arial;
+      background-color: #87CEEB;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  .container {
+    max-width: 860px;
+    background: #fff;
+    padding: 30px 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 30px;
+    margin: 30px auto;
+  }
+
+  .section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(to bottom right, #f8fff6, #e4fbe2);
+    border: 1px solid #B6EEC1;
+    border-radius: 16px;
+    padding: 24px;
+    width: 240px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .upload-area {
+    border: 2px dashed #00C300;
+    border-radius: 12px;
+    padding: 18px;
+    background-color: #ffffff;
+    color: #333;
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 12px;
+    font-size: 15px;
+  }
+
+  .upload-area:hover {
+    background-color: #efffee;
+  }
+
+  canvas {
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background: white;
+    margin: 10px auto;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  }
+
+  .btn-download {
+    background: linear-gradient(to right, #00C300, #00b200);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease;
+  }
+
+  .btn-download:hover {
+    background-color: #00a500;
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+</style>
+
+
+<style>
+  .nav-links {
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+
+  .nav-links a {
+    display: inline-block;
+    margin: 0 10px;
+    padding: 10px 20px;
+    background-color: #00C300;
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+  }
+
+  .nav-links a:hover {
+    background-color: #00a500;
+  }
+
+</style>
+
+</head>
+<body>
+<div class="nav-links">
+<a href="./index.html">🏠 主頁</a>
+  <a href="./cropper.html">📑Main & Tab 切割</a>
+  
+</div>
+    
+    
+    </div>
+
+
+
+  <div class="container">
+    <div class="section" style="width: 240px;">
+      <div class="upload-area" onclick="document.getElementById('mainUpload').click();">
+        Main 圖片 (240x240)<br>拖曳或點擊上傳
+      </div>
+      <input type="file" id="mainUpload" accept="image/*">
+      <canvas id="mainCanvas" width="240" height="240"></canvas>
+      <button id="mainDownload" class="btn-download" style="display:none;">下載</button>
+    </div>
+
+    <div class="section" style="width: 130px;">
+      <div class="upload-area" onclick="document.getElementById('tabUpload').click();">
+        Tab 圖片 (96x74)<br>拖曳或點擊上傳
+      </div>
+      <input type="file" id="tabUpload" accept="image/*">
+      <canvas id="tabCanvas" width="96" height="74"></canvas>
+      <button id="tabDownload" class="btn-download" style="display:none;">下載</button>
+    </div>
+  </div>
+
+  <script>
+    function setupUploader(inputId, canvasId, downloadId, width, height) {
+      const input = document.getElementById(inputId);
+      const canvas = document.getElementById(canvasId);
+      const downloadBtn = document.getElementById(downloadId);
+      const ctx = canvas.getContext('2d');
+
+      input.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = new Image();
+          img.onload = function() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, width, height);
+            downloadBtn.style.display = 'inline-block';
+            downloadBtn.onclick = function() {
+              const link = document.createElement('a');
+              link.download = inputId + '.png';
+              link.href = canvas.toDataURL();
+              link.click();
+            };
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    setupUploader("mainUpload", "mainCanvas", "mainDownload", 240, 240);
+    setupUploader("tabUpload", "tabCanvas", "tabDownload", 96, 74);
+  </script>
+</body>
+</html>
