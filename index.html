@@ -10,12 +10,18 @@
       font-family: 'Noto Sans TC', sans-serif;
       background-color: #E9FBE5;
       margin: 0;
-      padding: 40px 20px;
+      padding: 80px 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
     #container {
+  max-width: 800px;
+  margin: 80px auto 20px auto;
+  background-color: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.08);
       background: white;
       padding: 24px;
       border-radius: 16px;
@@ -112,8 +118,67 @@
       border-radius: 6px;
     }
   </style>
+
+<style>
+  .nav-bar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: #00C300;
+    padding: 12px 0;
+    text-align: center;
+    z-index: 999;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .nav-bar a {
+    display: inline-block;
+    margin: 0 20px;
+    padding: 10px 20px;
+    color: white;
+    font-weight: bold;
+    background-color: #00C300;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+  }
+  .nav-bar a:hover {
+    background-color: #00a500;
+  }
+</style>
+
 </head>
 <body>
+<div class="nav-bar">
+  <a href="../sticker_crop_line_horizontal/index.html">Main & Tab 切割</a>
+  <a href="../image_cropper_line_style/index.html">單圖裁切工具</a>
+</div>
+
+<div class="nav-bar">
+  <a href="../sticker_crop_line_horizontal/index.html">Main & Tab 切割</a>
+  <a href="../image_cropper_line_style/index.html">單圖裁切工具</a>
+</div>
+<style>
+  .nav-bar {
+    background-color: #00C300;
+    padding: 16px;
+    text-align: center;
+  }
+  .nav-bar a {
+    display: inline-block;
+    margin: 0 20px;
+    padding: 10px 20px;
+    color: white;
+    font-weight: bold;
+    background-color: #00C300;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+  }
+  .nav-bar a:hover {
+    background-color: #00a500;
+  }
+</style>
+
   <div id="container">
     <div id="header">
       <h2 id="title">LINE 貼圖裁剪工具</h2>
@@ -144,7 +209,15 @@
       📥 支援所有 AI 生成圖，只要上傳圖片，馬上整理出 9 張符合 LINE 規格的貼圖，效率滿分！<br><br>
       剪好後還能用 Canva 加字，或匯入 LINE 貼圖 App 編輯，整個流程超順手！
     </div>
+   <a href="https://drive.google.com/file/d/19ERSRPrJbUP3rgLil2B9uUQYvNvsN4vC/view?usp=drive_link" target="_blank" style="display: inline-block; padding: 10px 20px; border: 2px solid #007BFF; border-radius: 5px; text-decoration: none; color: #007BFF; font-family: sans-serif; font-size: 16px;">
+      圖片縮小320×320 下載
+    </a>
+
+
   </div>
+
+
+
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script>
