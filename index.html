@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>圖片裁剪工具</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: Arial;
+      background-color: #87CEEB;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #container {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 800px;
+      width: 100%;
+    }
+    #header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #countDisplay {
+      padding: 10px 15px;
+      background-color: #90ee90;
+      color: black;
+      border-radius: 5px;
+      font-weight: bold;
+      font-size: 16px;
+      border: 1px solid #444;
+    }
+    #upload {
+      padding: 10px;
+      border: 2px solid #aaa;
+      border-radius: 5px;
+      font-size: 20px;
+    }
+    img {
+      max-width: 100%;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      margin-right: 10px;
+    }
+    .downloadBtn {
+      display: inline-block;
+      margin-top: 5px;
+      margin-right: 20px;
+      padding: 10px 20px;
+      background-color: #e53935;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .downloadBtn:hover {
+      background-color: #c62828;
+    }
+    #preview {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .preview-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #cropBtn {
+      display: none;
+      background-color: #e53935;
+      color: white;
+      padding: 10px 25px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    #cropBtn:hover {
+      background-color: #c62828;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="container">
+    <div id="header">
+      <h2>圖片裁剪工具</h2>
+      <div id="countDisplay">目前裁切張數：0</div>
+    </div>
+    <input type="file" id="upload" accept="image/*">
+    <br><br>
+    <button id="cropBtn">裁剪圖片</button>
+    <div>
+      <img id="image" style="max-width: 100%; display: none;">
+    </div>
+
+    <h3>裁剪結果：</h3>
+    <div id="preview"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+  <script>
+    let cropper;
+    const image = document.getElementById('image');
+    const upload = document.getElementById('upload');
+    const cropBtn = document.getElementById('cropBtn');
+    const preview = document.getElementById('preview');
+    const countDisplay = document.getElementById('countDisplay');
+    let count = 0;
+
+    upload.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        image.src = event.target.result;
+        image.style.display = 'block';
+
+        if (cropper) cropper.destroy();
+
+        cropper = new Cropper(image, {
+          viewMode: 1,
+          dragMode: 'none',
+          zoomable: false,
+          scalable: false,
+          rotatable: false,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+          ready() {
+            cropper.setCropBoxData({
+              width: 320,
+              height: 320
+            });
+          }
+        });
+
+        cropBtn.style.display = 'inline-block';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    cropBtn.addEventListener('click', function() {
+      const originalCanvas = cropper.getCroppedCanvas();
+      const scale = 0.7;
+
+      const scaledCanvas = document.createElement('canvas');
+      scaledCanvas.width = originalCanvas.width * scale;
+      scaledCanvas.height = originalCanvas.height * scale;
+
+      const ctx = scaledCanvas.getContext('2d');
+      ctx.drawImage(originalCanvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+
+      const block = document.createElement('div');
+      block.className = 'preview-block';
+      block.appendChild(scaledCanvas);
+
+      scaledCanvas.toBlob(function(blob) {
+        const link = document.createElement('a');
+        link.className = 'downloadBtn';
+        count++;
+        link.download = `cropped-image-${count}.png`;
+        link.textContent = `⬇ 下載圖片 ${count}`;
+        link.href = URL.createObjectURL(blob);
+        block.appendChild(link);
+        preview.appendChild(block);
+        countDisplay.textContent = `目前裁切張數：${count}`;
+      }, 'image/png');
+    });
+  </script>
+</body>
+</html>
