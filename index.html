@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -6,151 +5,386 @@
   <title>圖片裁剪工具</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
   <style>
+    /* 全局設置 */
     body {
-      font-family: Arial;
-      background-color: #87CEEB;
+      font-family: "Segoe UI", "微軟正黑體", Arial, sans-serif; /* 調整字體 */
+      background-color: #f0f4f8; /* 非常淺的藍灰色背景 */
       margin: 0;
-      padding: 40px;
+      padding: 0 20px 40px 20px; /* 調整 padding，頂部為 0，底部保留 */
       display: flex;
       flex-direction: column;
       align-items: center;
+      color: #333; /* 默認文字顏色 */
     }
+
+    /* 導航列容器 */
+    nav {
+      width: 100%;
+      /* 移除背景和陰影，讓按鈕本身帶有視覺效果 */
+      padding: 15px 0; /* 增加上下 padding，給導航連結一些空間 */
+      margin-bottom: 20px; /* 調整導航列與容器的間距 */
+       position: relative; /* 確保 z-index 有效 */
+       z-index: 10; /* 讓導航在最上層 */
+    }
+
+    /* 導航連結容器 (用於居中和控制最大寬度) */
+    nav div {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center; /* 導航連結居中 */
+      padding: 0 20px; /* 導航列內容左右 padding */
+      gap: 20px; /* 調整連結之間的間距 */
+      flex-wrap: wrap; /* 允許在小屏幕換行 */
+    }
+
+    /* 導航連結 (按鈕樣式) */
+    nav a {
+      display: inline-block; /* 讓 padding, margin, width 有效 */
+      padding: 10px 20px; /* 增加內邊距，形成按鈕大小 */
+      border: 2px solid #64b5f6; /* 淺藍色邊框 */
+      background-color: #e3f2fd; /* 非常淺的藍色背景 */
+      color: #01579b; /* 深藍色文字 */
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+      border-radius: 5px; /* 圓角 */
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 輕微陰影 */
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; /* 平滑過渡 */
+      text-align: center; /* 文字居中 */
+      min-width: 120px; /* 設置最小寬度 */
+    }
+     nav a:hover {
+       background-color: #bbdefb; /* 懸停時背景變深 */
+       color: #01579b; /* 文字顏色不變 */
+       border-color: #42a5f5; /* 邊框顏色變深 */
+       box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* 懸停時陰影變大 */
+     }
+
+    /* 主要容器 */
     #container {
-      background: white;
-      padding: 20px;
+      background: #ffffff; /* 白色背景 */
+      padding: 25px; /* 調整 padding */
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1); /* 更明顯一點的陰影 */
       max-width: 800px;
       width: 100%;
+      box-sizing: border-box; /* 確保 padding 不影響寬度 */
+      /* margin-top: 20px; /* 如果 nav margin-bottom 不夠，可以在這裡加 */ */
     }
+
+    /* 標頭區塊 */
     #header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 20px; /* 增加底部間距 */
+      flex-wrap: wrap; /* 允許換行在小屏幕 */
     }
+
+    /* 貼圖數量顯示 */
     #countDisplay {
-      padding: 10px 15px;
-      background-color: #90ee90;
-      color: black;
+      padding: 8px 12px; /* 調整 padding */
+      background-color: #e1f5fe; /* 非常淺的藍色背景 */
+      color: #01579b; /* 深藍色文字 */
       border-radius: 5px;
       font-weight: bold;
-      font-size: 16px;
-      border: 1px solid #444;
+      font-size: 15px;
+      border: 1px solid #b3e5fc; /* 淺藍色邊框 */
+      margin-top: 10px; /* 在小屏幕換行時的間距 */
     }
+
+    /* 檔案上傳按鈕 */
     #upload {
       padding: 10px;
-      border: 2px solid #aaa;
+      border: 2px solid #ccc; /* 淺灰色邊框 */
       border-radius: 5px;
-      font-size: 20px;
+      font-size: 18px; /* 調整字體大小 */
+      background-color: #fff; /* 白色背景 */
+      cursor: pointer;
+      width: 100%; /* 讓輸入框佔滿寬度 */
+      box-sizing: border-box;
     }
+
+    /* 顯示圖片 */
     img {
       max-width: 100%;
+      height: auto; /* 保持比例 */
+      display: block; /* 防止下方有空白間隙 */
+      margin: 20px auto; /* 圖片居中顯示並增加上下間距 */
     }
+
+    /* 裁剪後的 Canvas */
     canvas {
-      border: 1px solid #ccc;
-      margin-right: 10px;
+      border: 1px solid #ddd; /* 淺灰色邊框 */
+      margin-bottom: 5px; /* Canvas 下方與按鈕的間距 */
     }
+
+    /* 下載按鈕 */
     .downloadBtn {
       display: inline-block;
       margin-top: 5px;
-      margin-right: 20px;
-      padding: 10px 20px;
-      background-color: #e53935;
+      padding: 8px 15px; /* 調整 padding */
+      background-color: #81c784; /* 柔和的淺綠色 */
       color: white;
       text-decoration: none;
       border-radius: 5px;
       font-weight: bold;
+      font-size: 14px; /* 調整字體大小 */
+      transition: background-color 0.3s ease; /* 平滑過渡 */
+      text-align: center; /* 文字居中 */
     }
     .downloadBtn:hover {
-      background-color: #c62828;
+      background-color: #66bb6a; /* 懸停時顏色稍深 */
     }
+
+    /* 預覽區塊 */
     #preview {
       display: flex;
       flex-wrap: wrap;
-      align-items: flex-start;
-      gap: 10px;
-      margin-top: 20px;
+      gap: 15px; /* 調整間距 */
+      margin-top: 25px; /* 調整上邊距 */
     }
+
+    /* 單個預覽項目 */
     .preview-block {
       display: flex;
       flex-direction: column;
       align-items: center;
+      background-color: #ffffff; /* 白色背景 */
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* 輕微陰影 */
+      border: 1px solid #eee; /* 非常淺的邊框 */
     }
+
+    /* 裁剪按鈕 */
     #cropBtn {
-      display: none;
-      background-color: #e53935;
+      display: none; /* JS 控制顯示 */
+      background-color: #64b5f6; /* 柔和的淺藍色 */
       color: white;
-      padding: 10px 25px;
-      font-size: 16px;
+      padding: 12px 30px; /* 調整 padding */
+      font-size: 18px; /* 調整字體大小 */
       border: none;
       border-radius: 5px;
       font-weight: bold;
-      margin-bottom: 20px;
+      margin-bottom: 20px; /* 調整底部間距 */
+      cursor: pointer;
+      transition: background-color 0.3s ease; /* 平滑過渡 */
     }
     #cropBtn:hover {
-      background-color: #c62828;
+      background-color: #42a5f5; /* 懸停時顏色稍深 */
     }
+
+    /* 標題樣式 */
     #title {
-      background: linear-gradient(135deg, #A2D2FF, #FFC8DD);
+      background: linear-gradient(135deg, #e0f7fa, #fff9c4); /* 更淺的漸層 */
       color: #333;
       text-align: center;
-      padding: 12px 20px;
-      border-radius: 12px;
+      padding: 10px 18px; /* 調整 padding */
+      border-radius: 10px; /* 調整圓角 */
       font-size: 22px;
       font-weight: bold;
-      letter-spacing: 1px;
-      box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-      font-family: "Segoe UI", "微軟正黑體", sans-serif;
+      letter-spacing: 0.8px; /* 調整字距 */
+      box-shadow: 1px 1px 5px rgba(0,0,0,0.1); /* 更輕的陰影 */
+      margin: 0; /* 移除默認 margin */
     }
+
+    /* 手機適配 */
     @media (max-width: 600px) {
+      body {
+        padding: 0 15px 20px 15px; /* 手機邊距，頂部為 0 */
+      }
       #container {
-        padding: 10px;
+        padding: 15px; /* 手機容器內 padding */
+      }
+      #header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      #countDisplay {
+        margin-top: 15px; /* 手機上標題下方的間距 */
+        margin-left: 0;
       }
       #upload {
         font-size: 16px;
+        padding: 8px;
       }
       #cropBtn {
-        padding: 8px 16px;
-        font-size: 14px;
+        padding: 10px 20px;
+        font-size: 16px;
+        width: 100%; /* 按鈕佔滿寬度 */
+        box-sizing: border-box;
       }
+      #title {
+        font-size: 20px;
+        padding: 8px 15px;
+      }
+      #preview {
+          justify-content: center; /* 預覽圖在小屏幕居中 */
+      }
+       .preview-block {
+          width: 150px; /* 在小屏幕固定預覽圖寬度 */
+          box-sizing: border-box;
+       }
+       canvas {
+           max-width: 100%; /* 確保 canvas 不超出 block */
+           height: auto;
+       }
+        .downloadBtn {
+            width: 100%; /* 下載按鈕佔滿 block 寬度 */
+            box-sizing: border-box;
+        }
+        nav div {
+             gap: 10px; /* 手機上減少連結間距 */
+        }
+         nav a {
+             padding: 8px 15px; /* 手機上按鈕內邊距 */
+             font-size: 15px; /* 手機上字體大小 */
+             min-width: unset; /* 移除最小寬度限制 */
+             flex-grow: 1; /* 讓按鈕彈性填充空間 */
+         }
     }
+
+    /* 裁切區縮放滑塊容器 */
     .slider-container {
-      margin-top: 10px;
+      margin-top: 20px; /* 調整上邊距 */
+      margin-bottom: 20px; /* 調整下邊距 */
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 15px; /* 調整間距 */
+      flex-wrap: wrap; /* 允許換行 */
+    }
+    .slider-container label {
+        font-size: 15px; /* 調整字體大小 */
+        color: #555; /* 深灰色文字 */
+        min-width: 80px; /* 確保 label 有最小寬度 */
     }
     .slider-container input[type="range"] {
-      width: 100%;
+      flex-grow: 1; /* 讓滑塊佔滿剩餘空間 */
+      min-width: 150px; /* 設置滑塊最小寬度 */
+      -webkit-appearance: none; /* 移除默認樣式 */
+      appearance: none;
+      height: 8px; /* 滑塊軌道高度 */
+      background: #ddd; /* 滑塊軌道背景 */
+      border-radius: 4px;
+      outline: none;
+      opacity: 0.7;
+      transition: opacity .2s;
     }
+
+    .slider-container input[type="range"]:hover {
+      opacity: 1;
+    }
+
+    .slider-container input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px; /* 滑塊大小 */
+      height: 20px;
+      background: #64b5f6; /* 滑塊顏色 */
+      cursor: pointer;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .slider-container input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #64b5f6;
+      cursor: pointer;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+
+    /* 全部清除按鈕 */
+    #clearBtn {
+      margin-top: 15px; /* 調整上邊距 */
+      margin-bottom: 20px;
+      padding: 8px 16px;
+      background-color: #e0e0e0; /* 淺灰色背景 */
+      color: #333; /* 深灰色文字 */
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+     #clearBtn:hover {
+      background-color: #d5d5d5; /* 懸停時顏色稍深 */
+     }
+
+
+    /* 底部說明區 */
+    div[style*="background-color: #f5f5f5"] { /* 精準選取說明區 */
+      margin-top: 30px;
+      padding: 15px;
+      background-color: #f5f5f5; /* 淺灰色背景 */
+      border-radius: 8px;
+      color: #333;
+      font-size: 15px;
+      line-height: 1.6;
+      border: 1px solid #eee; /* 非常淺的邊框 */
+    }
+    div[style*="background-color: #f5f5f5"] strong { /* 說明區內的粗體字 */
+       color: #007bff; /* 強調文字顏色 */
+    }
+
+    /* 底部連結 */
+    a[href*="drive.google.com"] { /* Google Drive 連結 */
+      display: inline-block;
+      margin-top: 20px; /* 調整上邊距 */
+      padding: 10px 20px;
+      border: 2px solid #64b5f6; /* 柔和的淺藍色邊框 */
+      border-radius: 5px;
+      text-decoration: none;
+      color: #007bff; /* 標準藍色文字 */
+      font-family: sans-serif;
+      font-size: 16px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    a[href*="drive.google.com"]:hover {
+        background-color: #64b5f6;
+        color: white;
+    }
+
+    a[href*="canva.com"] { /* Canva 連結 */
+      display: inline-block;
+      padding: 10px 20px;
+      border: 2px solid #81c784; /* 柔和的淺綠色邊框 */
+      border-radius: 5px;
+      text-decoration: none;
+      color: #4CAF50; /* 標準綠色文字 */
+      font-family: sans-serif;
+      font-size: 16px;
+      margin-top: 10px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+     a[href*="canva.com"]:hover {
+        background-color: #81c784;
+        color: white;
+    }
+
+
   </style>
 </head>
 <body>
-  <nav style="width: 100%; background-color: #00a500; padding: 10px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
-
- <div style="max-width: 800px; margin: 0 auto; display: flex; justify-content: space-around;">
-      <a href="./index.html" style="color: white; text-decoration: none; font-weight: bold; font-size: 16px;">🏠 主頁</a>
-      <a href="./cropper.html"style="color: white; text-decoration: none; font-weight: bold; font-size: 16px;">📑Main & Tab 切割</a>
+  <nav>
+    <div>
+      <a href="./index.html">🏠 主頁</a>
+      <a href="./cropper.html">📑Main & Tab 切割</a>
     </div>
-   
-
-
-
-
-
-
-
-
-
   </nav>
+
   <div id="container">
     <div id="header">
       <h2 id="title">🎨 LINE 貼圖裁剪工具 ✂️</h2>
       <div id="countDisplay">目前裁切張數：0</div>
     </div>
     <input type="file" id="upload" accept="image/*">
-    <br><br>
-    <div style="display: flex; align-items: center; justify-content: space-between;">
+    <br>
+    <div style="display: flex; align-items: center; justify-content: center; width: 100%;"> <!-- 居中裁剪按鈕 -->
       <button id="cropBtn">裁剪圖片</button>
     </div>
     <div>
@@ -159,32 +393,27 @@
 
     <h3>裁剪結果：</h3>
 
-    <button id="clearBtn" style="
-      margin-top: 10px;
-      margin-bottom: 20px;
-      padding: 8px 16px;
-      background-color: black;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-    ">全部清除</button>
+    <button id="clearBtn">全部清除</button>
 
     <div class="slider-container">
-      <label for="scaleSlider" style="font-size: 14px; color: black;">裁切區縮放</label>
+      <label for="scaleSlider">裁切區大小 (px)</label> <!-- 修改 Label 文字 -->
       <input type="range" id="scaleSlider" min="50" max="1000" step="10" value="320">
+       <span id="scaleValue" style="font-size: 14px; color: #555;">320</span> <!-- 顯示數值 -->
     </div>
-    <div id="preview"></div>
+
+    <div id="preview">
+      <!-- 裁剪結果將在這裡顯示 -->
+    </div>
 
     <div style="
       margin-top: 30px;
       padding: 15px;
-      background-color: #f2f2f2;
+      background-color: #f5f5f5; /* 淺灰色背景 */
       border-radius: 8px;
-      color: black;
-      font-size: 16px;
+      color: #333;
+      font-size: 15px;
       line-height: 1.6;
+      border: 1px solid #eee; /* 非常淺的邊框 */
     ">
       <strong>用 GPT 做 LINE 貼圖？裁切工具才是關鍵！</strong><br><br>
       GPT產圖超方便，一句「生成九宮格貼圖」就能搞定。但常常圖案位置會偏，無法直接使用。<br><br>
@@ -197,12 +426,12 @@
       裁好後還能用 Canva 加字，或匯入 LINE 貼圖 App 編輯，整個流程超順手！
     </div>
 
-    <a href="https://drive.google.com/file/d/19ERSRPrJbUP3rgLil2B9uUQYvNvsN4vC/view?usp=drive_link" target="_blank" style="display: inline-block; padding: 10px 20px; border: 2px solid #007BFF; border-radius: 5px; text-decoration: none; color: #007BFF; font-family: sans-serif; font-size: 16px;">
+    <a href="https://drive.google.com/file/d/19ERSRPrJbUP3rgLil2B9uUQYvNvsN4vC/view?usp=drive_link" target="_blank">
       圖片縮小320×320 下載
     </a>
-    <a href="https://www.canva.com/join/wnl-zmy-bwn" target="_blank" style="display: inline-block; padding: 10px 20px; border: 2px solid #4CAF50; border-radius: 5px; text-decoration: none; color: #4CAF50; font-family: sans-serif; font-size: 16px; margin-top: 10px;">
-  前往 Canva 編輯貼圖
-</a>
+    <a href="https://www.canva.com/join/wnl-zmy-bwn" target="_blank" style=" margin-top: 10px;"> <!-- 保留 margin-top -->
+      前往 Canva 編輯貼圖
+    </a>
 
   </div>
 
@@ -214,8 +443,13 @@
     const cropBtn = document.getElementById('cropBtn');
     const preview = document.getElementById('preview');
     const countDisplay = document.getElementById('countDisplay');
+    const clearBtn = document.getElementById('clearBtn'); // 獲取清除按鈕
+    const scaleSlider = document.getElementById('scaleSlider'); // 獲取滑塊
+    const scaleValueSpan = document.getElementById('scaleValue'); // 獲取顯示數值的 span
+
     let count = 0;
 
+    // 處理檔案上傳
     upload.addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -223,67 +457,103 @@
       const reader = new FileReader();
       reader.onload = function(event) {
         image.src = event.target.result;
-        image.style.display = 'block';
+        image.style.display = 'block'; // 顯示圖片
 
-        if (cropper) cropper.destroy();
+        if (cropper) {
+            cropper.destroy(); // 如果已經有 cropper 實例，先銷毀它
+        }
 
+        // 初始化 Cropper.js
         cropper = new Cropper(image, {
-          viewMode: 1,
-          dragMode: 'none',
-          zoomable: false,
-          scalable: false,
-          rotatable: false,
-          cropBoxMovable: true,
-          cropBoxResizable: true,
+          viewMode: 1, // 查看模式，1 表示限制裁剪框在圖片範圍內
+          dragMode: 'move', // 拖曳模式，move 允許移動圖片
+          zoomable: true, // 允許縮放
+          scalable: false, // 不允許水平或垂直縮放
+          rotatable: false, // 不允許旋轉
+          cropBoxMovable: true, // 允許移動裁剪框
+          cropBoxResizable: true, // 允許調整裁剪框大小
+          minCropBoxWidth: 50, // 最小裁剪框寬度
+          minCropBoxHeight: 50, // 最小裁剪框高度
+          aspectRatio: 1, // 設置裁剪框比例為 1:1
           ready() {
-            cropper.setCropBoxData({
-              width: 320,
-              height: 320
-            });
-          }
+            // 初始化裁剪框大小
+             const initialSize = parseInt(scaleSlider.value);
+             cropper.setCropBoxData({ width: initialSize, height: initialSize });
+             scaleValueSpan.textContent = initialSize; // 初始化顯示數值
+          },
+           cropmove: function(event) {
+              // 可選：如果裁剪框大小變化時需要更新滑塊值
+              const cropBoxData = cropper.getCropBoxData();
+              const size = Math.round(cropBoxData.width); // 假設寬高相等
+               // 防止滑塊超出範圍導致錯誤
+               if (size >= parseInt(scaleSlider.min) && size <= parseInt(scaleSlider.max)) {
+                   scaleSlider.value = size;
+                   scaleValueSpan.textContent = size;
+               }
+           }
         });
 
-        cropBtn.style.display = 'inline-block';
+        cropBtn.style.display = 'block'; // 顯示裁剪按鈕
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(file); // 將圖片讀取為 Data URL
     });
 
+    // 處理裁剪按鈕點擊
     cropBtn.addEventListener('click', function() {
-      const originalCanvas = cropper.getCroppedCanvas();
-      const scale = 0.7;
-      const scaledCanvas = document.createElement('canvas');
-      scaledCanvas.width = originalCanvas.width * scale;
-      scaledCanvas.height = originalCanvas.height * scale;
-      const ctx = scaledCanvas.getContext('2d');
-      ctx.drawImage(originalCanvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+      if (!cropper) return; // 如果沒有 cropper 實例，不執行
 
+      // 獲取裁剪後的 canvas
+      const originalCanvas = cropper.getCroppedCanvas();
+
+      // 如果需要縮小圖片，可以在這裡調整大小
+      // 例如，固定輸出為 320x320:
+      const targetSize = 320;
+      const scaledCanvas = document.createElement('canvas');
+      scaledCanvas.width = targetSize;
+      scaledCanvas.height = targetSize;
+      const ctx = scaledCanvas.getContext('2d');
+      // 將原始裁剪結果繪製到新的 canvas 上，並縮放到目標大小
+      ctx.drawImage(originalCanvas, 0, 0, targetSize, targetSize);
+
+
+      // 創建一個 div 來包含 Canvas 和下載按鈕
       const block = document.createElement('div');
       block.className = 'preview-block';
-      block.appendChild(scaledCanvas);
+      block.appendChild(scaledCanvas); // 將縮小後的 canvas 添加到 block
 
+      // 將 canvas 轉換為 Blob，然後創建下載連結
       scaledCanvas.toBlob(function(blob) {
         const link = document.createElement('a');
         link.className = 'downloadBtn';
-        count++;
-        link.download = 'picture.png';
-        link.textContent = '⬇ 下載圖片';
-        link.href = URL.createObjectURL(blob);
-        block.appendChild(link);
-        preview.appendChild(block);
+        count++; // 貼圖數量加一
+        // 設置下載檔案名稱，可以加上編號
+        link.download = `sticker_${count}.png`;
+        link.textContent = '⬇ 下載'; // 下載按鈕文字
+        link.href = URL.createObjectURL(blob); // 創建 Blob URL 作為下載連結
+        block.appendChild(link); // 將下載連結添加到 block
+        preview.appendChild(block); // 將整個 block 添加到預覽區
+
+        // 更新貼圖數量顯示
         countDisplay.textContent = `目前裁切張數：${count}`;
-      }, 'image/png');
+
+        // 釋放 Blob URL (下載後會自動釋放，但早點釋放更好)
+        // URL.revokeObjectURL(link.href); // 注意：這行可能會導致一些瀏覽器立即停止下載，最好不要加
+      }, 'image/png', 1); // 輸出為 PNG 格式，質量 1 (最高)
     });
 
-    document.getElementById('clearBtn').addEventListener('click', function () {
-      preview.innerHTML = '';
-      count = 0;
-      countDisplay.textContent = '目前裁切張數：0';
+    // 清除所有裁剪結果
+    clearBtn.addEventListener('click', function () {
+      preview.innerHTML = ''; // 清空預覽區的內容
+      count = 0; // 重置計數
+      countDisplay.textContent = '目前裁切張數：0'; // 更新顯示
     });
 
-    const slider = document.getElementById('scaleSlider');
-    slider.addEventListener('input', function () {
-      const size = parseInt(slider.value);
+    // 處理滑塊變化，調整裁剪框大小
+    scaleSlider.addEventListener('input', function () {
+      const size = parseInt(scaleSlider.value);
+      scaleValueSpan.textContent = size; // 更新顯示數值
       if (cropper) {
+        // 設置裁剪框的大小，同時保持中心位置不變（ Cropper.js 默認行為）
         cropper.setCropBoxData({ width: size, height: size });
       }
     });
