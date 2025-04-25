@@ -4,165 +4,239 @@
   <meta charset="UTF-8">
   <title>LINE 貼圖上傳裁切工具</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap" rel="stylesheet">
-  
-
-
-
-
-
-
-
-
-
 
 <style>
+    /* 全局設置 */
     body {
-      font-family: Arial;
-      background-color: #87CEEB;
+      font-family: "Noto Sans TC", "Segoe UI", "微軟正黑體", Arial, sans-serif; /* 調整字體，優先使用 Noto Sans TC */
+      background-color: #f0f4f8; /* 非常淺的藍灰色背景 */
       margin: 0;
-      padding: 40px;
+      padding: 0 20px 40px 20px; /* 調整 padding，頂部為 0，底部保留 */
       display: flex;
       flex-direction: column;
       align-items: center;
+      color: #333; /* 默認文字顏色 */
     }
-  .container {
-    max-width: 860px;
-    background: #fff;
-    padding: 30px 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    gap: 30px;
-    margin: 30px auto;
-  }
 
-  .section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: linear-gradient(to bottom right, #f8fff6, #e4fbe2);
-    border: 1px solid #B6EEC1;
-    border-radius: 16px;
-    padding: 24px;
-    width: 240px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  }
+    /* 導航列容器 */
+    nav {
+      width: 100%;
+      /* 移除背景和陰影，讓按鈕本身帶有視覺效果 */
+      padding: 15px 0; /* 增加上下 padding，給導航連結一些空間 */
+      margin-bottom: 20px; /* 調整導航列與容器的間距 */
+       position: relative; /* 確保 z-index 有效 */
+       z-index: 10; /* 讓導航在最上層 */
+    }
 
-  .upload-area {
-    border: 2px dashed #00C300;
-    border-radius: 12px;
-    padding: 18px;
-    background-color: #ffffff;
-    color: #333;
-    font-weight: bold;
-    text-align: center;
-    width: 100%;
-    margin-bottom: 12px;
-    font-size: 15px;
-  }
+    /* 導航連結容器 (用於居中和控制最大寬度) */
+    nav div {
+      max-width: 800px; /* 導航區域最大寬度與下方容器對齊 */
+      margin: 0 auto;
+      display: flex;
+      justify-content: center; /* 導航連結居中 */
+      padding: 0 20px; /* 導航列內容左右 padding */
+      gap: 20px; /* 調整連結之間的間距 */
+      flex-wrap: wrap; /* 允許在小屏幕換行 */
+    }
 
-  .upload-area:hover {
-    background-color: #efffee;
-  }
+    /* 導航連結 (按鈕樣式) */
+    nav a {
+      display: inline-block; /* 讓 padding, margin, width 有效 */
+      padding: 10px 20px; /* 增加內邊距，形成按鈕大小 */
+      border: 2px solid #64b5f6; /* 淺藍色邊框 */
+      background-color: #e3f2fd; /* 非常淺的藍色背景 */
+      color: #01579b; /* 深藍色文字 */
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+      border-radius: 5px; /* 圓角 */
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 輕微陰影 */
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; /* 平滑過渡 */
+      text-align: center; /* 文字居中 */
+      min-width: 120px; /* 設置最小寬度 */
+    }
+     nav a:hover {
+       background-color: #bbdefb; /* 懸停時背景變深 */
+       color: #01579b; /* 文字顏色不變 */
+       border-color: #42a5f5; /* 邊框顏色變深 */
+       box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* 懸停時陰影變大 */
+     }
 
-  canvas {
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    background: white;
-    margin: 10px auto;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
-  }
+    /* 主要內容容器 */
+    .container {
+      max-width: 860px; /* 與 nav div 的 max-width 類似，確保對齊 */
+      background: #fff;
+      padding: 30px; /* 調整 padding */
+      border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1); /* 統一陰影風格 */
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center; /* 使內容居中 */
+      gap: 30px; /* 區塊之間的間距 */
+      margin: 0 auto 30px auto; /* 頂部自動，底部 30px */
+      box-sizing: border-box; /* 確保 padding 不影響寬度 */
+    }
 
-  .btn-download {
-    background: linear-gradient(to right, #00C300, #00b200);
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    transition: background-color 0.3s ease;
-  }
+    /* 圖片區塊 */
+    .section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #ffffff; /* 統一白色背景 */
+      border: 1px solid #e0e0e0; /* 淺灰色邊框 */
+      border-radius: 16px;
+      padding: 40px; /* 進一步增加 padding，使框框變大 */
+      /* width 由下面的規則控制 */
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 輕微陰影 */
+      /* Removed box-sizing: border-box; */
+    }
 
-  .btn-download:hover {
-    background-color: #00a500;
-  }
+    /* 單獨設置 Main 區塊寬度 (內容寬度) */
+     .section:first-child {
+         width: 240px;
+     }
+    /* 單獨設置 Tab 區塊寬度 (內容寬度) */
+     .section:nth-child(2) {
+         width: 130px;
+     }
 
-  input[type="file"] {
-    display: none;
-  }
-</style>
 
+    /* 上傳區域指示 */
+    .upload-area {
+      border: 2px dashed #64b5f6; /* 淺藍色虛線邊框 */
+      border-radius: 12px;
+      padding: 15px; /* 調整 padding */
+      background-color: #e3f2fd; /* 淺藍色背景 */
+      color: #01579b; /* 深藍色文字 */
+      font-weight: bold;
+      text-align: center;
+      width: 100%; /* 相對於 .section 的內容區域 */
+      margin-bottom: 12px;
+      font-size: 15px;
+      cursor: pointer; /* 鼠標指針 */
+      transition: background-color 0.3s ease;
+      box-sizing: border-box; /* Upload Area 內部仍然使用 border-box 方便 width: 100% */
+    }
 
-<style>
-  .nav-links {
-    text-align: center;
-    margin-top: 10px;
-    margin-bottom: 20px;
-  }
+    .upload-area:hover {
+      background-color: #bbdefb; /* 懸停時顏色變深 */
+    }
 
-  .nav-links a {
-    display: inline-block;
-    margin: 0 10px;
-    padding: 10px 20px;
-    background-color: #00C300;
-    color: white;
-    font-weight: bold;
-    text-decoration: none;
-    border-radius: 10px;
-    transition: background-color 0.3s ease;
-  }
+    /* Canvas 圖片顯示區域 */
+    canvas {
+      border: 1px solid #ddd; /* 淺灰色邊框 */
+      border-radius: 10px;
+      background: white;
+      margin: 10px auto;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      display: block; /* 防止 Canvas 下方有空白間隙 */
+      max-width: 100%; /* 確保圖片不超出 .section 的內容區域 */
+      height: auto; /* 保持比例 */
+    }
 
-  .nav-links a:hover {
-    background-color: #00a500;
-  }
+    /* 下載按鈕 */
+    .btn-download {
+      display: inline-block; /* 確保樣式生效 */
+      background: linear-gradient(to right, #64b5f6, #42a5f5); /* 淺藍色漸層 */
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: background-color 0.3s ease;
+    }
 
+    .btn-download:hover {
+      background: linear-gradient(to right, #42a5f5, #2196f3); /* 懸停時顏色變深 */
+    }
+
+    /* 隱藏的檔案輸入 */
+    input[type="file"] {
+      display: none;
+    }
+
+    /* 手機適配 */
+    @media (max-width: 600px) {
+        body {
+            padding: 0 15px 20px 15px; /* 手機邊距，頂部為 0 */
+        }
+        nav div {
+             gap: 10px; /* 手機上減少連結間距 */
+        }
+         nav a {
+             padding: 8px 15px; /* 手機上按鈕內邊距 */
+             font-size: 15px; /* 手機上字體大小 */
+             min-width: unset; /* 移除最小寬度限制 */
+             flex-grow: 1; /* 讓按鈕彈性填充空間 */
+         }
+         .container {
+             padding: 20px; /* 手機容器 padding */
+             gap: 20px; /* 手機區塊間距 */
+             justify-content: center; /* 手機上區塊居中 */
+         }
+         .section, .section:nth-child(2) { /* 手機上讓兩個區塊都變成全寬 */
+            width: 100%;
+            max-width: 280px; /* 設置一個最大寬度，避免在非常寬的屏幕上過大 */
+            margin: 0 auto; /* 區塊自身居中 */
+            padding: 20px; /* 手機上使用較小的 padding */
+            box-sizing: border-box; /* 在手機上使用 border-box */
+         }
+         .upload-area {
+             padding: 12px; /* 手機上傳區域 padding */
+         }
+          .btn-download {
+             width: 100%; /* 手機上下載按鈕佔滿寬度 */
+             box-sizing: border-box; /* 在手機上下載按鈕使用 border-box */
+         }
+         canvas {
+             max-width: 100%; /* 確保 Canvas 不超出父元素在手機上的內容區域 */
+         }
+    }
 </style>
 
 </head>
 <body>
-<div class="nav-links">
-<a href="./index.html">🏠 主頁</a>
-  
-  
-</div>
-    
-    
+  <nav>
+    <div>
+      <a href="./index.html">🏠 主頁</a>
+      <a href="./cropper.html">📑Main & Tab 切割</a>
     </div>
-
+  </nav>
 
 
   <div class="container">
-    <div class="section" style="width: 240px;">
+    <div class="section">
       <div class="upload-area" onclick="document.getElementById('mainUpload').click();">
         Main 圖片 (240x240)<br>拖曳或點擊上傳
       </div>
       <input type="file" id="mainUpload" accept="image/*">
       <canvas id="mainCanvas" width="240" height="240"></canvas>
-      <button id="mainDownload" class="btn-download" style="display:none;">下載</button>
+      <button id="mainDownload" class="btn-download">下載</button>
     </div>
 
-    <div class="section" style="width: 130px;">
+    <div class="section">
       <div class="upload-area" onclick="document.getElementById('tabUpload').click();">
         Tab 圖片 (96x74)<br>拖曳或點擊上傳
       </div>
       <input type="file" id="tabUpload" accept="image/*">
       <canvas id="tabCanvas" width="96" height="74"></canvas>
-      <button id="tabDownload" class="btn-download" style="display:none;">下載</button>
+      <button id="tabDownload" class="btn-download">下載</button>
     </div>
   </div>
 
   <script>
-    function setupUploader(inputId, canvasId, downloadId, width, height) {
+    function setupUploader(inputId, canvasId, downloadId, targetWidth, targetHeight) {
       const input = document.getElementById(inputId);
       const canvas = document.getElementById(canvasId);
       const downloadBtn = document.getElementById(downloadId);
       const ctx = canvas.getContext('2d');
+
+      // 初始化時隱藏下載按鈕
+      downloadBtn.style.display = 'none';
 
       input.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -172,24 +246,58 @@
         reader.onload = function(event) {
           const img = new Image();
           img.onload = function() {
+            // 清除 canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, width, height);
+            // 將圖片繪製到 canvas 上，並縮放到目標尺寸
+            ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+            // 顯示下載按鈕
             downloadBtn.style.display = 'inline-block';
+
+            // 設置下載功能
             downloadBtn.onclick = function() {
               const link = document.createElement('a');
-              link.download = inputId + '.png';
-              link.href = canvas.toDataURL();
-              link.click();
+              // 設置下載文件名 (使用 inputId 作為基礎名稱)
+              link.download = inputId.replace('Upload', '') + '.png';
+              // 將 canvas 內容轉為 Data URL
+              link.href = canvas.toDataURL('image/png');
+              link.click(); // 觸發下載
             };
           };
           img.src = event.target.result;
         };
         reader.readAsDataURL(file);
       });
+
+      // 可選：添加拖放功能
+      const uploadArea = input.parentElement; // 獲取 .upload-area 元素
+      uploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault(); // 阻止默認行為，允許拖放
+          // 只有當拖放的是文件時才改變樣式
+          if (e.dataTransfer.items && e.dataTransfer.items.length > 0 && e.dataTransfer.items[0].kind === 'file') {
+              uploadArea.style.backgroundColor = '#bbdefb'; // 拖放時改變背景色
+          }
+      });
+      uploadArea.addEventListener('dragleave', () => {
+          uploadArea.style.backgroundColor = '#e3f2fd'; // 離開時恢復背景色
+      });
+       uploadArea.addEventListener('drop', (e) => {
+           e.preventDefault(); // 阻止默認行為
+           uploadArea.style.backgroundColor = '#e3f2fd'; // 恢復背景色
+           const files = e.dataTransfer.files;
+           if (files.length > 0) {
+               // 將拖放的文件賦值給文件輸入框
+               input.files = files;
+               // 手動觸發 change 事件，以便監聽器執行
+               const event = new Event('change', { bubbles: true });
+               input.dispatchEvent(event);
+           }
+       });
     }
 
+    //設置 Main 和 Tab 圖片上傳器
     setupUploader("mainUpload", "mainCanvas", "mainDownload", 240, 240);
-    setupUploader("tabUpload", "tabCanvas", "tabDownload", 96, 74);
+    setupUploader("tabUpload", "tabCanvas", "tabDownload", 96, 74); // 注意這裡的 targetWidth 和 targetHeight
   </script>
 </body>
 </html>
