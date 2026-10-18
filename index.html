@@ -2,371 +2,171 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>圖片裁剪工具</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LINE 貼圖裁剪工具</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
   <style>
-    /* 全局設置 */
+    :root {
+      --bg: #f0f4f8;
+      --card: #ffffff;
+      --text: #333;
+      --muted: #666;
+      --line: #e3e8ee;
+      --blue: #64b5f6;
+      --blue-dark: #42a5f5;
+      --blue-ink: #01579b;
+      --blue-soft: #e3f2fd;
+      --green: #66bb6a;
+      --green-dark: #4caf50;
+      --red: #e57373;
+    }
+    * { box-sizing: border-box; }
     body {
-      font-family: "Segoe UI", "微軟正黑體", Arial, sans-serif; /* 調整字體 */
-      background-color: #f0f4f8; /* 非常淺的藍灰色背景 */
+      font-family: "Segoe UI", "微軟正黑體", Arial, sans-serif;
+      background: var(--bg);
       margin: 0;
-      padding: 0 20px 40px 20px; /* 調整 padding，頂部為 0，底部保留 */
+      padding: 0 20px 40px;
+      color: var(--text);
       display: flex;
       flex-direction: column;
       align-items: center;
-      color: #333; /* 默認文字顏色 */
     }
 
-    /* 導航列容器 */
-    nav {
-      width: 100%;
-      /* 移除背景和陰影，讓按鈕本身帶有視覺效果 */
-      padding: 15px 0; /* 增加上下 padding，給導航連結一些空間 */
-      margin-bottom: 20px; /* 調整導航列與容器的間距 */
-       position: relative; /* 確保 z-index 有效 */
-       z-index: 10; /* 讓導航在最上層 */
-    }
-
-    /* 導航連結容器 (用於居中和控制最大寬度) */
-    nav div {
-      max-width: 800px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: center; /* 導航連結居中 */
-      padding: 0 20px; /* 導航列內容左右 padding */
-      gap: 20px; /* 調整連結之間的間距 */
-      flex-wrap: wrap; /* 允許在小屏幕換行 */
-    }
-
-    /* 導航連結 (按鈕樣式) */
+    /* 導航列 */
+    nav { width: 100%; padding: 15px 0; margin-bottom: 10px; }
+    nav div { max-width: 900px; margin: 0 auto; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
     nav a {
-      display: inline-block; /* 讓 padding, margin, width 有效 */
-      padding: 10px 20px; /* 增加內邊距，形成按鈕大小 */
-      border: 2px solid #64b5f6; /* 淺藍色邊框 */
-      background-color: #e3f2fd; /* 非常淺的藍色背景 */
-      color: #01579b; /* 深藍色文字 */
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 16px;
-      border-radius: 5px; /* 圓角 */
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* 輕微陰影 */
-      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; /* 平滑過渡 */
-      text-align: center; /* 文字居中 */
-      min-width: 120px; /* 設置最小寬度 */
+      padding: 10px 20px; border: 2px solid var(--blue); background: var(--blue-soft);
+      color: var(--blue-ink); text-decoration: none; font-weight: bold; border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,.1); min-width: 120px; text-align: center;
+      transition: background-color .2s, box-shadow .2s;
     }
-     nav a:hover {
-       background-color: #bbdefb; /* 懸停時背景變深 */
-       color: #01579b; /* 文字顏色不變 */
-       border-color: #42a5f5; /* 邊框顏色變深 */
-       box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* 懸停時陰影變大 */
-     }
+    nav a:hover { background: #bbdefb; box-shadow: 0 4px 8px rgba(0,0,0,.15); }
 
-    /* 主要容器 */
     #container {
-      background: #ffffff; /* 白色背景 */
-      padding: 25px; /* 調整 padding */
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.1); /* 更明顯一點的陰影 */
-      max-width: 800px;
-      width: 100%;
-      box-sizing: border-box; /* 確保 padding 不影響寬度 */
-      /* margin-top: 20px; /* 如果 nav margin-bottom 不夠，可以在這裡加 */ */
+      background: var(--card); padding: 25px; border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.1); max-width: 900px; width: 100%;
     }
-
-    /* 標頭區塊 */
-    #header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px; /* 增加底部間距 */
-      flex-wrap: wrap; /* 允許換行在小屏幕 */
-    }
-
-    /* 貼圖數量顯示 */
-    #countDisplay {
-      padding: 8px 12px; /* 調整 padding */
-      background-color: #e1f5fe; /* 非常淺的藍色背景 */
-      color: #01579b; /* 深藍色文字 */
-      border-radius: 5px;
-      font-weight: bold;
-      font-size: 15px;
-      border: 1px solid #b3e5fc; /* 淺藍色邊框 */
-      margin-top: 10px; /* 在小屏幕換行時的間距 */
-    }
-
-    /* 檔案上傳按鈕 */
-    #upload {
-      padding: 10px;
-      border: 2px solid #ccc; /* 淺灰色邊框 */
-      border-radius: 5px;
-      font-size: 18px; /* 調整字體大小 */
-      background-color: #fff; /* 白色背景 */
-      cursor: pointer;
-      width: 100%; /* 讓輸入框佔滿寬度 */
-      box-sizing: border-box;
-    }
-
-    /* 顯示圖片 */
-    img {
-      max-width: 100%;
-      height: auto; /* 保持比例 */
-      display: block; /* 防止下方有空白間隙 */
-      margin: 20px auto; /* 圖片居中顯示並增加上下間距 */
-    }
-
-    /* 裁剪後的 Canvas */
-    canvas {
-      border: 1px solid #ddd; /* 淺灰色邊框 */
-      margin-bottom: 5px; /* Canvas 下方與按鈕的間距 */
-    }
-
-    /* 下載按鈕 */
-    .downloadBtn {
-      display: inline-block;
-      margin-top: 5px;
-      padding: 8px 15px; /* 調整 padding */
-      background-color: #81c784; /* 柔和的淺綠色 */
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      font-weight: bold;
-      font-size: 14px; /* 調整字體大小 */
-      transition: background-color 0.3s ease; /* 平滑過渡 */
-      text-align: center; /* 文字居中 */
-    }
-    .downloadBtn:hover {
-      background-color: #66bb6a; /* 懸停時顏色稍深 */
-    }
-
-    /* 預覽區塊 */
-    #preview {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px; /* 調整間距 */
-      margin-top: 25px; /* 調整上邊距 */
-    }
-
-    /* 單個預覽項目 */
-    .preview-block {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background-color: #ffffff; /* 白色背景 */
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* 輕微陰影 */
-      border: 1px solid #eee; /* 非常淺的邊框 */
-    }
-
-    /* 裁剪按鈕 */
-    #cropBtn {
-      display: none; /* JS 控制顯示 */
-      background-color: #64b5f6; /* 柔和的淺藍色 */
-      color: white;
-      padding: 12px 30px; /* 調整 padding */
-      font-size: 18px; /* 調整字體大小 */
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      margin-bottom: 20px; /* 調整底部間距 */
-      cursor: pointer;
-      transition: background-color 0.3s ease; /* 平滑過渡 */
-    }
-    #cropBtn:hover {
-      background-color: #42a5f5; /* 懸停時顏色稍深 */
-    }
-
-    /* 標題樣式 */
+    #header { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
     #title {
-      background: linear-gradient(135deg, #e0f7fa, #fff9c4); /* 更淺的漸層 */
-      color: #333;
-      text-align: center;
-      padding: 10px 18px; /* 調整 padding */
-      border-radius: 10px; /* 調整圓角 */
-      font-size: 22px;
-      font-weight: bold;
-      letter-spacing: 0.8px; /* 調整字距 */
-      box-shadow: 1px 1px 5px rgba(0,0,0,0.1); /* 更輕的陰影 */
-      margin: 0; /* 移除默認 margin */
+      background: linear-gradient(135deg, #e0f7fa, #fff9c4); text-align: center;
+      padding: 10px 18px; border-radius: 10px; font-size: 22px; margin: 0;
+      box-shadow: 1px 1px 5px rgba(0,0,0,.1);
     }
+    #countDisplay {
+      padding: 8px 12px; background: #e1f5fe; color: var(--blue-ink); border-radius: 5px;
+      font-weight: bold; font-size: 15px; border: 1px solid #b3e5fc;
+    }
+    #countDisplay small { font-weight: normal; color: var(--muted); }
 
-    /* 手機適配 */
+    /* 上傳區 */
+    #dropZone {
+      border: 2px dashed #b0bec5; border-radius: 10px; padding: 22px; text-align: center;
+      cursor: pointer; color: var(--muted); transition: background-color .2s, border-color .2s;
+    }
+    #dropZone.drag, #dropZone:hover { background: var(--blue-soft); border-color: var(--blue); }
+    #dropZone strong { color: var(--blue-ink); font-size: 17px; }
+    #upload { display: none; }
+
+    h3 { margin: 26px 0 12px; font-size: 17px; }
+    .panel { border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-top: 16px; }
+    .panel-title { font-weight: bold; margin-bottom: 12px; color: var(--blue-ink); }
+
+    /* 表單 */
+    .fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px 14px; }
+    .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+    .field input, .field select {
+      width: 100%; padding: 7px 8px; border: 1px solid #cfd8dc; border-radius: 6px; font-size: 15px; background: #fff;
+    }
+    .checks { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 14px; align-items: center; }
+    .checks label { display: flex; align-items: center; gap: 6px; font-size: 15px; cursor: pointer; }
+    .checks input[type="range"] { width: 120px; }
+    .hint { font-size: 13px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+
+    /* 模式分頁 */
+    .tabs { display: flex; gap: 8px; margin-top: 20px; }
+    .tab {
+      flex: 1; padding: 11px; border: 2px solid var(--line); background: #fafbfc; border-radius: 8px;
+      font-size: 16px; font-weight: bold; cursor: pointer; color: var(--muted);
+    }
+    .tab.active { border-color: var(--blue); background: var(--blue-soft); color: var(--blue-ink); }
+    .mode { display: none; }
+    .mode.active { display: block; }
+
+    /* 按鈕 */
+    .btn {
+      padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; font-size: 15px;
+      cursor: pointer; transition: background-color .2s; color: #fff; background: var(--blue);
+    }
+    .btn:hover { background: var(--blue-dark); }
+    .btn.big { padding: 13px 30px; font-size: 18px; }
+    .btn.green { background: var(--green); }
+    .btn.green:hover { background: var(--green-dark); }
+    .btn.gray { background: #e0e0e0; color: #333; }
+    .btn.gray:hover { background: #d5d5d5; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; align-items: center; }
+
+    /* 格線畫布 */
+    #gridWrap { margin-top: 14px; text-align: center; }
+    #gridCanvas { max-width: 100%; height: auto; border-radius: 6px; cursor: move; touch-action: none; background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0/16px 16px; }
+
+    #manualWrap { margin-top: 14px; max-height: 70vh; }
+    #manualImg { display: block; max-width: 100%; }
+
+    .empty { color: var(--muted); text-align: center; padding: 30px 10px; }
+
+    /* 結果 */
+    #preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
+    .preview-block {
+      position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 10px; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+    .preview-block canvas {
+      width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;
+      background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0/12px 12px;
+    }
+    .preview-block .name { font-size: 13px; color: var(--muted); }
+    .downloadBtn {
+      width: 100%; padding: 7px 10px; background: #81c784; color: #fff; text-decoration: none;
+      border-radius: 5px; font-weight: bold; font-size: 14px; text-align: center;
+    }
+    .downloadBtn:hover { background: var(--green); }
+    .delBtn {
+      position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%;
+      border: none; background: rgba(0,0,0,.45); color: #fff; cursor: pointer; font-size: 14px; line-height: 26px;
+    }
+    .delBtn:hover { background: var(--red); }
+
+    .info {
+      margin-top: 30px; padding: 15px; background: #f5f5f5; border-radius: 8px;
+      font-size: 15px; line-height: 1.6; border: 1px solid #eee;
+    }
+    .info strong { color: #007bff; }
+    .ext-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    .ext-links a {
+      padding: 10px 20px; border: 2px solid var(--blue); border-radius: 5px; text-decoration: none;
+      color: #007bff; font-size: 16px; transition: background-color .2s, color .2s;
+    }
+    .ext-links a:hover { background: var(--blue); color: #fff; }
+    .ext-links a.canva { border-color: #81c784; color: var(--green-dark); }
+    .ext-links a.canva:hover { background: #81c784; color: #fff; }
+
+    #toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #333; color: #fff;
+      padding: 10px 18px; border-radius: 8px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    #toast.show { opacity: .92; }
+
     @media (max-width: 600px) {
-      body {
-        padding: 0 15px 20px 15px; /* 手機邊距，頂部為 0 */
-      }
-      #container {
-        padding: 15px; /* 手機容器內 padding */
-      }
-      #header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      #countDisplay {
-        margin-top: 15px; /* 手機上標題下方的間距 */
-        margin-left: 0;
-      }
-      #upload {
-        font-size: 16px;
-        padding: 8px;
-      }
-      #cropBtn {
-        padding: 10px 20px;
-        font-size: 16px;
-        width: 100%; /* 按鈕佔滿寬度 */
-        box-sizing: border-box;
-      }
-      #title {
-        font-size: 20px;
-        padding: 8px 15px;
-      }
-      #preview {
-          justify-content: center; /* 預覽圖在小屏幕居中 */
-      }
-       .preview-block {
-          width: 150px; /* 在小屏幕固定預覽圖寬度 */
-          box-sizing: border-box;
-       }
-       canvas {
-           max-width: 100%; /* 確保 canvas 不超出 block */
-           height: auto;
-       }
-        .downloadBtn {
-            width: 100%; /* 下載按鈕佔滿 block 寬度 */
-            box-sizing: border-box;
-        }
-        nav div {
-             gap: 10px; /* 手機上減少連結間距 */
-        }
-         nav a {
-             padding: 8px 15px; /* 手機上按鈕內邊距 */
-             font-size: 15px; /* 手機上字體大小 */
-             min-width: unset; /* 移除最小寬度限制 */
-             flex-grow: 1; /* 讓按鈕彈性填充空間 */
-         }
+      body { padding: 0 12px 20px; }
+      #container { padding: 15px; }
+      #title { font-size: 19px; }
+      nav div { gap: 10px; }
+      nav a { min-width: unset; flex-grow: 1; padding: 8px 12px; font-size: 15px; }
+      .btn.big { width: 100%; }
+      #preview { grid-template-columns: repeat(2, 1fr); }
     }
-
-    /* 裁切區縮放滑塊容器 */
-    .slider-container {
-      margin-top: 20px; /* 調整上邊距 */
-      margin-bottom: 20px; /* 調整下邊距 */
-      display: flex;
-      align-items: center;
-      gap: 15px; /* 調整間距 */
-      flex-wrap: wrap; /* 允許換行 */
-    }
-    .slider-container label {
-        font-size: 15px; /* 調整字體大小 */
-        color: #555; /* 深灰色文字 */
-        min-width: 80px; /* 確保 label 有最小寬度 */
-    }
-    .slider-container input[type="range"] {
-      flex-grow: 1; /* 讓滑塊佔滿剩餘空間 */
-      min-width: 150px; /* 設置滑塊最小寬度 */
-      -webkit-appearance: none; /* 移除默認樣式 */
-      appearance: none;
-      height: 8px; /* 滑塊軌道高度 */
-      background: #ddd; /* 滑塊軌道背景 */
-      border-radius: 4px;
-      outline: none;
-      opacity: 0.7;
-      transition: opacity .2s;
-    }
-
-    .slider-container input[type="range"]:hover {
-      opacity: 1;
-    }
-
-    .slider-container input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 20px; /* 滑塊大小 */
-      height: 20px;
-      background: #64b5f6; /* 滑塊顏色 */
-      cursor: pointer;
-      border-radius: 50%;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
-
-    .slider-container input[type="range"]::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
-      background: #64b5f6;
-      cursor: pointer;
-      border-radius: 50%;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
-
-
-    /* 全部清除按鈕 */
-    #clearBtn {
-      margin-top: 15px; /* 調整上邊距 */
-      margin-bottom: 20px;
-      padding: 8px 16px;
-      background-color: #e0e0e0; /* 淺灰色背景 */
-      color: #333; /* 深灰色文字 */
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-     #clearBtn:hover {
-      background-color: #d5d5d5; /* 懸停時顏色稍深 */
-     }
-
-
-    /* 底部說明區 */
-    div[style*="background-color: #f5f5f5"] { /* 精準選取說明區 */
-      margin-top: 30px;
-      padding: 15px;
-      background-color: #f5f5f5; /* 淺灰色背景 */
-      border-radius: 8px;
-      color: #333;
-      font-size: 15px;
-      line-height: 1.6;
-      border: 1px solid #eee; /* 非常淺的邊框 */
-    }
-    div[style*="background-color: #f5f5f5"] strong { /* 說明區內的粗體字 */
-       color: #007bff; /* 強調文字顏色 */
-    }
-
-    /* 底部連結 */
-    a[href*="drive.google.com"] { /* Google Drive 連結 */
-      display: inline-block;
-      margin-top: 20px; /* 調整上邊距 */
-      padding: 10px 20px;
-      border: 2px solid #64b5f6; /* 柔和的淺藍色邊框 */
-      border-radius: 5px;
-      text-decoration: none;
-      color: #007bff; /* 標準藍色文字 */
-      font-family: sans-serif;
-      font-size: 16px;
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
-    a[href*="drive.google.com"]:hover {
-        background-color: #64b5f6;
-        color: white;
-    }
-
-    a[href*="canva.com"] { /* Canva 連結 */
-      display: inline-block;
-      padding: 10px 20px;
-      border: 2px solid #81c784; /* 柔和的淺綠色邊框 */
-      border-radius: 5px;
-      text-decoration: none;
-      color: #4CAF50; /* 標準綠色文字 */
-      font-family: sans-serif;
-      font-size: 16px;
-      margin-top: 10px;
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
-     a[href*="canva.com"]:hover {
-        background-color: #81c784;
-        color: white;
-    }
-
-
   </style>
 </head>
 <body>
@@ -382,181 +182,715 @@
       <h2 id="title">🎨 LINE 貼圖裁剪工具 ✂️</h2>
       <div id="countDisplay">目前裁切張數：0</div>
     </div>
-    <input type="file" id="upload" accept="image/*">
-    <br>
-    <div style="display: flex; align-items: center; justify-content: center; width: 100%;"> <!-- 居中裁剪按鈕 -->
-      <button id="cropBtn">裁剪圖片</button>
+
+    <div id="dropZone">
+      <strong>📂 點此選擇圖片</strong><br>
+      或把圖片拖曳到這裡 / 直接 Ctrl+V 貼上
+      <input type="file" id="upload" accept="image/*">
     </div>
-    <div>
-      <img id="image" style="max-width: 100%; display: none;">
+
+    <!-- 輸出設定 -->
+    <div class="panel">
+      <div class="panel-title">⚙️ 輸出設定</div>
+      <div class="fields">
+        <div class="field">
+          <label for="preset">尺寸預設</label>
+          <select id="preset">
+            <option value="370x320">LINE 貼圖 370×320（最大）</option>
+            <option value="320x320" selected>正方形 320×320</option>
+            <option value="240x240">主要圖片 240×240</option>
+            <option value="96x74">聊天室標籤 96×74</option>
+            <option value="custom">自訂</option>
+          </select>
+        </div>
+        <div class="field"><label for="outW">輸出寬 (px)</label><input type="number" id="outW" value="320" min="10" step="2"></div>
+        <div class="field"><label for="outH">輸出高 (px)</label><input type="number" id="outH" value="320" min="10" step="2"></div>
+        <div class="field"><label for="margin">留白 (px)</label><input type="number" id="margin" value="10" min="0" step="1"></div>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="optTrim" checked> 🎯 智慧置中（自動找圖案並置中）</label>
+        <label><input type="checkbox" id="optRemoveBg"> 🪄 背景去背（轉透明）</label>
+        <label>容許度 <input type="range" id="tolerance" min="5" max="120" value="40"> <span id="tolVal">40</span></label>
+      </div>
+      <div class="hint">
+        智慧置中：每格裡自動偵測圖案範圍，等比縮放後置中，解決 AI 圖「圖案偏一邊」的問題；空白格會自動略過。<br>
+        背景去背：從邊緣往內把和背景相近的顏色變透明（適合純色背景）。容許度越高去得越多。
+      </div>
+    </div>
+
+    <!-- 模式 -->
+    <div class="tabs">
+      <button class="tab active" data-mode="grid">🔲 格線自動裁切</button>
+      <button class="tab" data-mode="manual">✂️ 手動裁切</button>
+    </div>
+
+    <div class="mode active" id="mode-grid">
+      <div class="panel">
+        <div class="fields">
+          <div class="field"><label for="cols">欄數（橫）</label><input type="number" id="cols" value="3" min="1" max="20"></div>
+          <div class="field"><label for="rows">列數（直）</label><input type="number" id="rows" value="3" min="1" max="20"></div>
+          <div class="field"><label for="cellW">每格寬 (px)</label><input type="number" id="cellW" value="0" min="1"></div>
+          <div class="field"><label for="cellH">每格高 (px)</label><input type="number" id="cellH" value="0" min="1"></div>
+          <div class="field"><label for="offX">起點 X</label><input type="number" id="offX" value="0"></div>
+          <div class="field"><label for="offY">起點 Y</label><input type="number" id="offY" value="0"></div>
+          <div class="field"><label for="gapX">水平間距</label><input type="number" id="gapX" value="0" min="0"></div>
+          <div class="field"><label for="gapY">垂直間距</label><input type="number" id="gapY" value="0" min="0"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="detectBtn">🤖 自動偵測位置</button>
+          <button class="btn gray" id="evenBtn">⚖️ 依欄列平均分割</button>
+          <button class="btn gray" id="fillBtn">📐 依格子大小算欄列</button>
+          <span id="imgInfo" class="hint" style="margin:0"></span>
+        </div>
+        <div class="hint" id="modeHint"></div>
+        <div id="gridWrap">
+          <div class="empty" id="gridEmpty">先上傳一張圖片</div>
+          <canvas id="gridCanvas" style="display:none"></canvas>
+        </div>
+        <div class="btn-row" style="justify-content:center">
+          <button class="btn big" id="gridCropBtn" disabled>✂️ 一鍵裁切全部格子</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mode" id="mode-manual">
+      <div class="panel">
+        <div class="checks" style="margin-top:0">
+          <label><input type="checkbox" id="lockRatio" checked> 鎖定為輸出比例</label>
+        </div>
+        <div id="manualWrap">
+          <div class="empty" id="manualEmpty">先上傳一張圖片</div>
+          <img id="manualImg" alt="" style="display:none">
+        </div>
+        <div class="btn-row" style="justify-content:center">
+          <button class="btn big" id="manualCropBtn" disabled>✂️ 裁切此區（Enter）</button>
+        </div>
+      </div>
     </div>
 
     <h3>裁剪結果：</h3>
-
-    <button id="clearBtn">全部清除</button>
-
-    <div class="slider-container">
-      <label for="scaleSlider">裁切區大小 (px)</label> <!-- 修改 Label 文字 -->
-      <input type="range" id="scaleSlider" min="50" max="1000" step="10" value="320">
-       <span id="scaleValue" style="font-size: 14px; color: #555;">320</span> <!-- 顯示數值 -->
+    <div class="btn-row" style="margin-top:0;margin-bottom:14px">
+      <button class="btn green" id="zipBtn" disabled>📦 全部下載（ZIP）</button>
+      <button class="btn gray" id="clearBtn">🗑️ 全部清除</button>
     </div>
+    <div id="preview"></div>
+    <div class="empty" id="previewEmpty">還沒有裁切結果</div>
 
-    <div id="preview">
-      <!-- 裁剪結果將在這裡顯示 -->
-    </div>
-
-    <div style="
-      margin-top: 30px;
-      padding: 15px;
-      background-color: #f5f5f5; /* 淺灰色背景 */
-      border-radius: 8px;
-      color: #333;
-      font-size: 15px;
-      line-height: 1.6;
-      border: 1px solid #eee; /* 非常淺的邊框 */
-    ">
+    <div class="info">
       <strong>用 GPT 做 LINE 貼圖？裁切工具才是關鍵！</strong><br><br>
-      GPT產圖超方便，一句「生成九宮格貼圖」就能搞定。但常常圖案位置會偏，無法直接使用。<br><br>
+      GPT 產圖超方便，一句「生成九宮格貼圖」就能搞定。但常常圖案位置會偏，無法直接使用。<br><br>
       🔧 <strong>特色簡介：</strong><br>
-      自動九宮格裁切框<br>
-      支援拖曳與縮放，自由調整<br>
-      手機操作也方便，滑條輕鬆微調<br>
-      一鍵裁切，立即預覽與下載<br><br>
-      支援所有 AI 生成圖，只要上傳圖片，馬上整理出 9 張符合 LINE 規格的貼圖，效率滿分！<br><br>
+      設定欄列或格子大小，一鍵自動切出每一格<br>
+      智慧置中：自動找到圖案、等比縮放置中，偏掉也不怕<br>
+      純色背景一鍵去背，符合 LINE 透明背景規格<br>
+      支援手動裁切、拖曳上傳、Ctrl+V 貼上<br>
+      全部打包 ZIP 下載，檔名 01.png、02.png… 直接符合 LINE 上架<br><br>
+      LINE 貼圖規格：最大 370×320、PNG 透明背景、每張需留約 10px 邊距，數量為 8 / 16 / 24 / 32 / 40 張。<br><br>
       裁好後還能用 Canva 加字，或匯入 LINE 貼圖 App 編輯，整個流程超順手！
     </div>
 
-    <a href="https://drive.google.com/file/d/19ERSRPrJbUP3rgLil2B9uUQYvNvsN4vC/view?usp=drive_link" target="_blank">
-      圖片縮小320×320 下載
-    </a>
-    <a href="https://www.canva.com/join/wnl-zmy-bwn" target="_blank" style=" margin-top: 10px;"> <!-- 保留 margin-top -->
-      前往 Canva 編輯貼圖
-    </a>
-
+    <div class="ext-links">
+      <a href="https://drive.google.com/file/d/19ERSRPrJbUP3rgLil2B9uUQYvNvsN4vC/view?usp=drive_link" target="_blank">圖片縮小320×320 下載</a>
+      <a class="canva" href="https://www.canva.com/join/wnl-zmy-bwn" target="_blank">前往 Canva 編輯貼圖</a>
+    </div>
   </div>
 
+  <div id="toast"></div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script>
-    let cropper;
-    const image = document.getElementById('image');
-    const upload = document.getElementById('upload');
-    const cropBtn = document.getElementById('cropBtn');
-    const preview = document.getElementById('preview');
-    const countDisplay = document.getElementById('countDisplay');
-    const clearBtn = document.getElementById('clearBtn'); // 獲取清除按鈕
-    const scaleSlider = document.getElementById('scaleSlider'); // 獲取滑塊
-    const scaleValueSpan = document.getElementById('scaleValue'); // 獲取顯示數值的 span
+    const $ = id => document.getElementById(id);
+    const state = { img: null, results: [], mode: 'grid', cropper: null, detected: null };
 
-    let count = 0;
+    // ---------- 小工具 ----------
+    const num = id => parseInt($(id).value, 10) || 0;
+    const pad = n => String(n).padStart(2, '0');
+    let toastTimer;
+    function toast(msg) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
 
-    // 處理檔案上傳
-    upload.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        image.src = event.target.result;
-        image.style.display = 'block'; // 顯示圖片
-
-        if (cropper) {
-            cropper.destroy(); // 如果已經有 cropper 實例，先銷毀它
-        }
-
-        // 初始化 Cropper.js
-        cropper = new Cropper(image, {
-          viewMode: 1, // 查看模式，1 表示限制裁剪框在圖片範圍內
-          dragMode: 'move', // 拖曳模式，move 允許移動圖片
-          zoomable: true, // 允許縮放
-          scalable: false, // 不允許水平或垂直縮放
-          rotatable: false, // 不允許旋轉
-          cropBoxMovable: true, // 允許移動裁剪框
-          cropBoxResizable: true, // 允許調整裁剪框大小
-          minCropBoxWidth: 50, // 最小裁剪框寬度
-          minCropBoxHeight: 50, // 最小裁剪框高度
-          aspectRatio: 1, // 設置裁剪框比例為 1:1
-          ready() {
-            // 初始化裁剪框大小
-             const initialSize = parseInt(scaleSlider.value);
-             cropper.setCropBoxData({ width: initialSize, height: initialSize });
-             scaleValueSpan.textContent = initialSize; // 初始化顯示數值
-          },
-           cropmove: function(event) {
-              // 可選：如果裁剪框大小變化時需要更新滑塊值
-              const cropBoxData = cropper.getCropBoxData();
-              const size = Math.round(cropBoxData.width); // 假設寬高相等
-               // 防止滑塊超出範圍導致錯誤
-               if (size >= parseInt(scaleSlider.min) && size <= parseInt(scaleSlider.max)) {
-                   scaleSlider.value = size;
-                   scaleValueSpan.textContent = size;
-               }
-           }
-        });
-
-        cropBtn.style.display = 'block'; // 顯示裁剪按鈕
+    function getOptions() {
+      return {
+        outW: Math.max(10, num('outW')),
+        outH: Math.max(10, num('outH')),
+        margin: Math.max(0, num('margin')),
+        trim: $('optTrim').checked,
+        removeBg: $('optRemoveBg').checked,
+        tol: num('tolerance')
       };
-      reader.readAsDataURL(file); // 將圖片讀取為 Data URL
+    }
+
+    // ---------- 載入圖片 ----------
+    function loadFile(file) {
+      if (!file || !file.type.startsWith('image/')) return toast('請選擇圖片檔');
+      const reader = new FileReader();
+      reader.onload = e => loadImageFromURL(e.target.result);
+      reader.readAsDataURL(file);
+    }
+
+    function loadImageFromURL(url) {
+      const img = new Image();
+      img.onload = () => {
+        state.img = img;
+        $('imgInfo').textContent = `原圖 ${img.naturalWidth} × ${img.naturalHeight}`;
+        $('gridEmpty').style.display = 'none';
+        $('gridCanvas').style.display = 'inline-block';
+        $('gridCropBtn').disabled = false;
+        $('manualEmpty').style.display = 'none';
+        $('manualCropBtn').disabled = false;
+        // 先試自動偵測，抓不到再用平均分割
+        if (!autoDetect(true)) evenSplit();
+        $('manualImg').src = url;
+        if (state.mode === 'manual') initCropper();
+        else destroyCropper();
+      };
+      img.src = url;
+    }
+
+    const dropZone = $('dropZone');
+    dropZone.addEventListener('click', () => $('upload').click());
+    $('upload').addEventListener('change', e => { loadFile(e.target.files[0]); e.target.value = ''; });
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag');
+      loadFile(e.dataTransfer.files[0]);
+    });
+    document.addEventListener('paste', e => {
+      const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+      if (item) loadFile(item.getAsFile());
     });
 
-    // 處理裁剪按鈕點擊
-    cropBtn.addEventListener('click', function() {
-      if (!cropper) return; // 如果沒有 cropper 實例，不執行
+    // ---------- 輸出設定 ----------
+    $('preset').addEventListener('change', () => {
+      const v = $('preset').value;
+      if (v === 'custom') return;
+      const [w, h] = v.split('x');
+      $('outW').value = w;
+      $('outH').value = h;
+      $('margin').value = v === '96x74' ? 2 : 10;
+      onOutputSizeChange();
+    });
+    ['outW', 'outH'].forEach(id => $(id).addEventListener('input', () => {
+      $('preset').value = 'custom';
+      onOutputSizeChange();
+    }));
+    $('tolerance').addEventListener('input', () => $('tolVal').textContent = $('tolerance').value);
 
-      // 獲取裁剪後的 canvas
-      const originalCanvas = cropper.getCroppedCanvas();
+    function onOutputSizeChange() {
+      if (state.cropper && $('lockRatio').checked) state.cropper.setAspectRatio(num('outW') / num('outH'));
+    }
 
-      // 如果需要縮小圖片，可以在這裡調整大小
-      // 例如，固定輸出為 320x320:
-      const targetSize = 320;
-      const scaledCanvas = document.createElement('canvas');
-      scaledCanvas.width = targetSize;
-      scaledCanvas.height = targetSize;
-      const ctx = scaledCanvas.getContext('2d');
-      // 將原始裁剪結果繪製到新的 canvas 上，並縮放到目標大小
-      ctx.drawImage(originalCanvas, 0, 0, targetSize, targetSize);
+    // ---------- 核心：處理一塊區域 ----------
+    // sx, sy, sw, sh 為原圖座標；回傳輸出的 canvas，若是空白格則回傳 null
+    function processRegion(sx, sy, sw, sh, opt, skipEmpty) {
+      const img = state.img;
+      // 夾在圖片範圍內
+      const x0 = Math.max(0, Math.round(sx)), y0 = Math.max(0, Math.round(sy));
+      const x1 = Math.min(img.naturalWidth, Math.round(sx + sw)), y1 = Math.min(img.naturalHeight, Math.round(sy + sh));
+      const w = x1 - x0, h = y1 - y0;
+      if (w < 2 || h < 2) return null;
 
+      const src = document.createElement('canvas');
+      src.width = w; src.height = h;
+      const sctx = src.getContext('2d', { willReadFrequently: true });
+      sctx.drawImage(img, x0, y0, w, h, 0, 0, w, h);
+      const data = sctx.getImageData(0, 0, w, h);
+      const bg = sampleBackground(data);
 
-      // 創建一個 div 來包含 Canvas 和下載按鈕
-      const block = document.createElement('div');
-      block.className = 'preview-block';
-      block.appendChild(scaledCanvas); // 將縮小後的 canvas 添加到 block
+      if (opt.removeBg) {
+        floodClear(data, bg, opt.tol);
+        sctx.putImageData(data, 0, 0);
+      }
 
-      // 將 canvas 轉換為 Blob，然後創建下載連結
-      scaledCanvas.toBlob(function(blob) {
+      let box = { x: 0, y: 0, w, h };
+      if (opt.trim) {
+        const b = contentBox(data, bg, opt.tol, opt.removeBg);
+        if (!b) { if (skipEmpty) return null; }
+        else box = b;
+      }
+
+      const out = document.createElement('canvas');
+      out.width = opt.outW; out.height = opt.outH;
+      const octx = out.getContext('2d');
+      // 未去背時，用原背景色填滿留白，避免出現一圈透明框
+      if (!opt.removeBg && (opt.trim || opt.margin > 0)) {
+        octx.fillStyle = `rgba(${bg[0]},${bg[1]},${bg[2]},${bg[3] / 255})`;
+        octx.fillRect(0, 0, out.width, out.height);
+      }
+      const availW = Math.max(1, opt.outW - opt.margin * 2);
+      const availH = Math.max(1, opt.outH - opt.margin * 2);
+      const scale = Math.min(availW / box.w, availH / box.h);
+      const dw = box.w * scale, dh = box.h * scale;
+      octx.imageSmoothingEnabled = true;
+      octx.imageSmoothingQuality = 'high';
+      octx.drawImage(src, box.x, box.y, box.w, box.h, (opt.outW - dw) / 2, (opt.outH - dh) / 2, dw, dh);
+      return out;
+    }
+
+    // 取四個角落的平均色當作背景色
+    function sampleBackground({ data, width: w, height: h }) {
+      const corners = [0, w - 1, (h - 1) * w, h * w - 1];
+      const sum = [0, 0, 0, 0];
+      corners.forEach(i => { for (let k = 0; k < 4; k++) sum[k] += data[i * 4 + k]; });
+      return sum.map(v => Math.round(v / 4));
+    }
+
+    function isBgPixel(px, p, bg, t2) {
+      if (px[p + 3] < 16) return true;
+      const dr = px[p] - bg[0], dg = px[p + 1] - bg[1], db = px[p + 2] - bg[2];
+      return dr * dr + dg * dg + db * db <= t2;
+    }
+
+    // 從邊緣開始把相近背景色的像素變透明（不會吃掉圖案內部的白色）
+    function floodClear({ data: px, width: w, height: h }, bg, tol) {
+      const t2 = tol * tol * 3;
+      const seen = new Uint8Array(w * h);
+      const stack = [];
+      for (let x = 0; x < w; x++) stack.push(x, (h - 1) * w + x);
+      for (let y = 0; y < h; y++) stack.push(y * w, y * w + w - 1);
+      while (stack.length) {
+        const i = stack.pop();
+        if (seen[i]) continue;
+        seen[i] = 1;
+        if (!isBgPixel(px, i * 4, bg, t2)) continue;
+        px[i * 4 + 3] = 0;
+        const x = i % w, y = (i - x) / w;
+        if (x > 0) stack.push(i - 1);
+        if (x < w - 1) stack.push(i + 1);
+        if (y > 0) stack.push(i - w);
+        if (y < h - 1) stack.push(i + w);
+      }
+    }
+
+    // 找出圖案（非背景）的範圍
+    function contentBox({ data: px, width: w, height: h }, bg, tol, alphaOnly) {
+      const t2 = tol * tol * 3;
+      let minX = w, minY = h, maxX = -1, maxY = -1;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const p = (y * w + x) * 4;
+          const solid = alphaOnly ? px[p + 3] >= 16 : !isBgPixel(px, p, bg, t2);
+          if (solid) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX < 0) return null;
+      // 太小的雜點不算圖案
+      if ((maxX - minX) * (maxY - minY) < w * h * 0.002) return null;
+      return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+    }
+
+    // ---------- 格線模式 ----------
+    const gridCanvas = $('gridCanvas');
+    const gridIds = ['cols', 'rows', 'cellW', 'cellH', 'offX', 'offY', 'gapX', 'gapY'];
+    gridIds.forEach(id => $(id).addEventListener('input', () => { state.detected = null; drawGrid(); }));
+
+    // 目前要裁切的方框：自動偵測結果優先，否則用格線
+    const currentRects = () => state.detected || cellRects(getGrid());
+
+    // ---------- 自動偵測位置 ----------
+    // 先用「找空白帶切割」（適合排成格子的貼圖，就算貼圖靠很近也行），
+    // 不行再用「相連區塊」（適合散落擺放的貼圖）。回傳是否成功
+    function autoDetect(silent) {
+      const img = state.img;
+      if (!img) return false;
+      const W = img.naturalWidth, H = img.naturalHeight;
+      const s = Math.min(1, 1600 / Math.max(W, H)); // 太大的圖先縮小
+      const w = Math.max(1, Math.round(W * s)), h = Math.max(1, Math.round(H * s));
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0, w, h);
+      const data = ctx.getImageData(0, 0, w, h);
+      const bg = sampleBackground(data);
+      // 偵測時容許度至少 20，避免 JPG 雜訊讓背景被當成圖案
+      const t2 = Math.max(20, num('tolerance')) ** 2 * 3;
+
+      const mask = new Uint8Array(w * h);
+      for (let i = 0; i < w * h; i++) mask[i] = isBgPixel(data.data, i * 4, bg, t2) ? 0 : 1;
+
+      let boxes = mergeSmallBoxes(xyCutBoxes(mask, w, h));
+      if (boxes.length < 2) boxes = mergeSmallBoxes(componentBoxes(mask, w, h));
+
+      // 只抓到一整塊（例如背景不是純色）就算失敗
+      if (boxes.length < 2) {
+        if (!silent) toast('偵測不到分開的貼圖，請改用格線分割或調整容許度');
+        return false;
+      }
+
+      // 依閱讀順序排序：先分列（中心點落在同一列範圍的算同列），再由左到右
+      boxes.sort((a, b) => a.y0 - b.y0);
+      const rows = [];
+      boxes.forEach(b => {
+        const cy = (b.y0 + b.y1) / 2;
+        const row = rows.find(rw => cy >= rw.y0 && cy <= rw.y1);
+        if (row) { row.items.push(b); row.y0 = Math.min(row.y0, b.y0); row.y1 = Math.max(row.y1, b.y1); }
+        else rows.push({ y0: b.y0, y1: b.y1, items: [b] });
+      });
+      rows.sort((a, b) => a.y0 - b.y0);
+
+      const pad = Math.round(4 / s); // 四周多留一點，不要切到邊
+      state.detected = rows.flatMap(rw => rw.items.sort((a, b) => a.x0 - b.x0)).map(b => {
+        const x = Math.max(0, Math.floor(b.x0 / s) - pad), y = Math.max(0, Math.floor(b.y0 / s) - pad);
+        return {
+          x, y,
+          w: Math.min(W, Math.ceil((b.x1 + 1) / s) + pad) - x,
+          h: Math.min(H, Math.ceil((b.y1 + 1) / s) + pad) - y
+        };
+      });
+      drawGrid();
+      if (!silent) toast(`偵測到 ${state.detected.length} 張貼圖`);
+      return true;
+    }
+
+    // 遞迴切割：找整條都是背景的橫帶／直帶當分隔線，一直切到切不動為止
+    function xyCutBoxes(mask, w, h) {
+      const boxes = [];
+      const minGap = Math.max(2, Math.round(Math.min(w, h) * 0.003));
+
+      // 回傳某方向上有圖案的區段 [起, 迄]（相對座標）
+      function segments(x0, y0, x1, y1, alongY) {
+        const len = alongY ? y1 - y0 + 1 : x1 - x0 + 1;
+        const span = alongY ? x1 - x0 + 1 : y1 - y0 + 1;
+        const thr = Math.max(1, span * 0.004); // 一條線上少於 0.4% 是圖案就當作空白
+        const prof = new Int32Array(len);
+        for (let y = y0; y <= y1; y++)
+          for (let x = x0; x <= x1; x++)
+            if (mask[y * w + x]) prof[alongY ? y - y0 : x - x0]++;
+        const segs = [];
+        let start = -1, end = -1, gap = 0;
+        for (let i = 0; i < len; i++) {
+          if (prof[i] > thr) {
+            if (start < 0) start = i;
+            end = i; gap = 0;
+          } else if (start >= 0 && ++gap >= minGap) {
+            segs.push([start, end]); start = -1;
+          }
+        }
+        if (start >= 0) segs.push([start, end]);
+        return segs;
+      }
+
+      function cut(x0, y0, x1, y1, depth) {
+        for (const alongY of [true, false]) {
+          const segs = segments(x0, y0, x1, y1, alongY);
+          if (!segs.length) return;
+          if (segs.length > 1 && depth < 12) {
+            segs.forEach(([a, b]) => alongY ? cut(x0, y0 + a, x1, y0 + b, depth + 1) : cut(x0 + a, y0, x0 + b, y1, depth + 1));
+            return;
+          }
+          // 只有一段：把範圍縮到剛好包住圖案
+          const [a, b] = segs[0];
+          if (alongY) { y1 = y0 + b; y0 += a; } else { x1 = x0 + b; x0 += a; }
+        }
+        boxes.push({ x0, y0, x1, y1 });
+      }
+
+      cut(0, 0, w - 1, h - 1, 0);
+      return boxes;
+    }
+
+    // 相連區塊：先膨脹讓同一張貼圖的零件黏在一起，再找每一塊的範圍
+    function componentBoxes(mask, w, h) {
+      const m = dilate(mask, w, h, Math.max(2, Math.round(Math.min(w, h) * 0.012)));
+      const label = new Int32Array(w * h);
+      const queue = new Int32Array(w * h);
+      const boxes = [];
+      for (let start = 0; start < w * h; start++) {
+        if (!m[start] || label[start]) continue;
+        const id = boxes.length + 1;
+        let head = 0, tail = 0;
+        queue[tail++] = start; label[start] = id;
+        const b = { x0: w, y0: h, x1: 0, y1: 0 };
+        while (head < tail) {
+          const i = queue[head++];
+          const x = i % w, y = (i - x) / w;
+          if (x < b.x0) b.x0 = x; if (x > b.x1) b.x1 = x;
+          if (y < b.y0) b.y0 = y; if (y > b.y1) b.y1 = y;
+          const nb = [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1];
+          for (const j of nb) if (j >= 0 && m[j] && !label[j]) { label[j] = id; queue[tail++] = j; }
+        }
+        boxes.push(b);
+      }
+      // 重疊的方框合併
+      let merged = true;
+      while (merged) {
+        merged = false;
+        outer: for (let a = 0; a < boxes.length; a++)
+          for (let k = a + 1; k < boxes.length; k++) {
+            const A = boxes[a], B = boxes[k];
+            if (A.x0 <= B.x1 && B.x0 <= A.x1 && A.y0 <= B.y1 && B.y0 <= A.y1) {
+              boxes[a] = unionBox(A, B);
+              boxes.splice(k, 1);
+              merged = true;
+              break outer;
+            }
+          }
+      }
+      return boxes;
+    }
+
+    const boxArea = b => (b.x1 - b.x0 + 1) * (b.y1 - b.y0 + 1);
+    const unionBox = (A, B) => ({ x0: Math.min(A.x0, B.x0), y0: Math.min(A.y0, B.y0), x1: Math.max(A.x1, B.x1), y1: Math.max(A.y1, B.y1) });
+
+    // 太小的方框（被切開的文字、愛心、雜點）併到最近的大方框
+    function mergeSmallBoxes(boxes) {
+      if (boxes.length < 2) return boxes;
+      const areas = boxes.map(boxArea).sort((a, b) => a - b);
+      const ref = areas[Math.floor(areas.length * 0.75)]; // 用前 25% 大的當基準
+      const big = boxes.filter(b => boxArea(b) >= ref * 0.3);
+      const small = boxes.filter(b => boxArea(b) < ref * 0.3);
+      small.forEach(sb => {
+        if (boxArea(sb) < ref * 0.002) return; // 雜點直接丟掉
+        const dist = b => Math.max(0, b.x0 - sb.x1, sb.x0 - b.x1) + Math.max(0, b.y0 - sb.y1, sb.y0 - b.y1);
+        let best = 0;
+        big.forEach((b, i) => { if (dist(b) < dist(big[best])) best = i; });
+        big[best] = unionBox(big[best], sb);
+      });
+      return big;
+    }
+
+    function dilate(mask, w, h, r) {
+      const tmp = new Uint8Array(w * h), out = new Uint8Array(w * h);
+      for (let y = 0; y < h; y++) {           // 水平方向
+        let last = -1e9;
+        for (let x = 0; x < w; x++) if (mask[y * w + x]) last = x; else if (x - last <= r) tmp[y * w + x] = 1;
+        last = 1e9;
+        for (let x = w - 1; x >= 0; x--) { if (mask[y * w + x]) { last = x; tmp[y * w + x] = 1; } else if (last - x <= r) tmp[y * w + x] = 1; }
+      }
+      for (let x = 0; x < w; x++) {           // 垂直方向
+        let last = -1e9;
+        for (let y = 0; y < h; y++) if (tmp[y * w + x]) last = y; else if (y - last <= r) out[y * w + x] = 1;
+        last = 1e9;
+        for (let y = h - 1; y >= 0; y--) { if (tmp[y * w + x]) { last = y; out[y * w + x] = 1; } else if (last - y <= r) out[y * w + x] = 1; }
+      }
+      return out;
+    }
+
+    $('detectBtn').addEventListener('click', () => autoDetect(false));
+
+    function getGrid() {
+      return {
+        cols: Math.max(1, num('cols')), rows: Math.max(1, num('rows')),
+        cw: Math.max(1, num('cellW')), ch: Math.max(1, num('cellH')),
+        ox: num('offX'), oy: num('offY'), gx: num('gapX'), gy: num('gapY')
+      };
+    }
+
+    function cellRects(g) {
+      const rects = [];
+      for (let r = 0; r < g.rows; r++)
+        for (let c = 0; c < g.cols; c++)
+          rects.push({ x: g.ox + c * (g.cw + g.gx), y: g.oy + r * (g.ch + g.gy), w: g.cw, h: g.ch });
+      return rects;
+    }
+
+    function evenSplit() {
+      if (!state.img) return;
+      const g = getGrid();
+      const W = state.img.naturalWidth, H = state.img.naturalHeight;
+      state.detected = null;
+      $('offX').value = 0; $('offY').value = 0;
+      $('cellW').value = Math.floor((W - (g.cols - 1) * g.gx) / g.cols);
+      $('cellH').value = Math.floor((H - (g.rows - 1) * g.gy) / g.rows);
+      drawGrid();
+    }
+
+    function fillBySize() {
+      if (!state.img) return;
+      const g = getGrid();
+      const W = state.img.naturalWidth, H = state.img.naturalHeight;
+      state.detected = null;
+      $('cols').value = Math.max(1, Math.floor((W - g.ox + g.gx) / (g.cw + g.gx)));
+      $('rows').value = Math.max(1, Math.floor((H - g.oy + g.gy) / (g.ch + g.gy)));
+      drawGrid();
+    }
+
+    $('evenBtn').addEventListener('click', evenSplit);
+    $('fillBtn').addEventListener('click', fillBySize);
+
+    function drawGrid() {
+      const img = state.img;
+      if (!img) return;
+      const W = img.naturalWidth, H = img.naturalHeight;
+      gridCanvas.width = W; gridCanvas.height = H;
+      const ctx = gridCanvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const rects = currentRects();
+      $('modeHint').innerHTML = state.detected
+        ? `🤖 自動偵測到 <strong>${rects.length}</strong> 張貼圖。改任何格線數值或按「平均分割」就會切回格線模式。`
+        : '🔲 格線模式：在下方圖片上<strong>拖曳</strong>可以移動整組格線。數值都是原圖的像素。';
+      const unit = W / (gridCanvas.getBoundingClientRect().width || W); // 讓線寬在螢幕上固定
+
+      // 格子外變暗
+      ctx.beginPath();
+      ctx.rect(0, 0, W, H);
+      rects.forEach(r => ctx.rect(r.x, r.y, r.w, r.h));
+      ctx.fillStyle = 'rgba(0,0,0,.45)';
+      ctx.fill('evenodd');
+
+      ctx.lineWidth = 2 * unit;
+      ctx.strokeStyle = '#ff4081';
+      ctx.setLineDash([6 * unit, 4 * unit]);
+      rects.forEach(r => ctx.strokeRect(r.x, r.y, r.w, r.h));
+      ctx.setLineDash([]);
+
+      ctx.font = `bold ${14 * unit}px sans-serif`;
+      ctx.textBaseline = 'top';
+      rects.forEach((r, i) => {
+        const label = pad(i + 1);
+        const tw = ctx.measureText(label).width;
+        ctx.fillStyle = '#ff4081';
+        ctx.fillRect(r.x, r.y, tw + 10 * unit, 20 * unit);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(label, r.x + 5 * unit, r.y + 3 * unit);
+      });
+    }
+    window.addEventListener('resize', drawGrid);
+
+    // 拖曳移動整組格線
+    let drag = null;
+    gridCanvas.addEventListener('pointerdown', e => {
+      if (!state.img || state.detected) return;
+      gridCanvas.setPointerCapture(e.pointerId);
+      drag = { x: e.clientX, y: e.clientY, ox: num('offX'), oy: num('offY') };
+    });
+    gridCanvas.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const k = gridCanvas.width / gridCanvas.getBoundingClientRect().width;
+      $('offX').value = Math.round(drag.ox + (e.clientX - drag.x) * k);
+      $('offY').value = Math.round(drag.oy + (e.clientY - drag.y) * k);
+      drawGrid();
+    });
+    ['pointerup', 'pointercancel'].forEach(t => gridCanvas.addEventListener(t, () => drag = null));
+
+    $('gridCropBtn').addEventListener('click', () => {
+      if (!state.img) return;
+      const opt = getOptions();
+      const rects = currentRects();
+      let added = 0, skipped = 0;
+      rects.forEach(r => {
+        const out = processRegion(r.x, r.y, r.w, r.h, opt, true);
+        if (out) { addResult(out); added++; } else skipped++;
+      });
+      toast(`已裁切 ${added} 張` + (skipped ? `，略過 ${skipped} 個空白格` : ''));
+      $('preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // ---------- 手動模式 ----------
+    function initCropper() {
+      destroyCropper();
+      if (!state.img) return;
+      const el = $('manualImg');
+      el.style.display = 'block';
+      state.cropper = new Cropper(el, {
+        viewMode: 1,
+        dragMode: 'move',
+        autoCropArea: 0.4,
+        rotatable: false,
+        scalable: false,
+        aspectRatio: $('lockRatio').checked ? num('outW') / num('outH') : NaN
+      });
+    }
+    function destroyCropper() {
+      if (state.cropper) { state.cropper.destroy(); state.cropper = null; }
+    }
+    $('lockRatio').addEventListener('change', () => {
+      if (state.cropper) state.cropper.setAspectRatio($('lockRatio').checked ? num('outW') / num('outH') : NaN);
+    });
+
+    function manualCrop() {
+      if (!state.cropper) return;
+      const d = state.cropper.getData(true);
+      const out = processRegion(d.x, d.y, d.width, d.height, getOptions(), false);
+      if (out) { addResult(out); toast('已裁切 1 張'); }
+    }
+    $('manualCropBtn').addEventListener('click', manualCrop);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && state.mode === 'manual' && !/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) manualCrop();
+    });
+
+    // ---------- 分頁切換 ----------
+    document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+      state.mode = tab.dataset.mode;
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+      document.querySelectorAll('.mode').forEach(m => m.classList.toggle('active', m.id === 'mode-' + state.mode));
+      if (state.mode === 'manual') initCropper();
+      else { destroyCropper(); drawGrid(); }
+    }));
+
+    // ---------- 結果 ----------
+    // 同步產生 PNG，確保結果順序和裁切順序一致
+    function addResult(canvas) {
+      state.results.push({ canvas, url: canvas.toDataURL('image/png') });
+      renderResults();
+    }
+
+    function renderResults() {
+      const preview = $('preview');
+      preview.innerHTML = '';
+      state.results.forEach((r, i) => {
+        const name = `${pad(i + 1)}.png`;
+        const block = document.createElement('div');
+        block.className = 'preview-block';
+        const del = document.createElement('button');
+        del.className = 'delBtn';
+        del.textContent = '✕';
+        del.title = '刪除這張';
+        del.onclick = () => {
+          state.results.splice(i, 1);
+          renderResults();
+        };
+        const label = document.createElement('div');
+        label.className = 'name';
+        label.textContent = `${name}（${r.canvas.width}×${r.canvas.height}）`;
         const link = document.createElement('a');
         link.className = 'downloadBtn';
-        count++; // 貼圖數量加一
-        // 設置下載檔案名稱，可以加上編號
-        link.download = `sticker_${count}.png`;
-        link.textContent = '⬇ 下載'; // 下載按鈕文字
-        link.href = URL.createObjectURL(blob); // 創建 Blob URL 作為下載連結
-        block.appendChild(link); // 將下載連結添加到 block
-        preview.appendChild(block); // 將整個 block 添加到預覽區
+        link.href = r.url;
+        link.download = name;
+        link.textContent = '⬇ 下載';
+        block.append(del, r.canvas, label, link);
+        preview.appendChild(block);
+      });
 
-        // 更新貼圖數量顯示
-        countDisplay.textContent = `目前裁切張數：${count}`;
+      const n = state.results.length;
+      const ok = [8, 16, 24, 32, 40].includes(n);
+      $('countDisplay').innerHTML = `目前裁切張數：${n}` +
+        (n ? ` <small>${ok ? '✅ 符合 LINE 張數' : '（LINE 需 8/16/24/32/40 張）'}</small>` : '');
+      $('previewEmpty').style.display = n ? 'none' : 'block';
+      $('zipBtn').disabled = !n;
+    }
 
-        // 釋放 Blob URL (下載後會自動釋放，但早點釋放更好)
-        // URL.revokeObjectURL(link.href); // 注意：這行可能會導致一些瀏覽器立即停止下載，最好不要加
-      }, 'image/png', 1); // 輸出為 PNG 格式，質量 1 (最高)
+    $('clearBtn').addEventListener('click', () => {
+      state.results = [];
+      renderResults();
     });
 
-    // 清除所有裁剪結果
-    clearBtn.addEventListener('click', function () {
-      preview.innerHTML = ''; // 清空預覽區的內容
-      count = 0; // 重置計數
-      countDisplay.textContent = '目前裁切張數：0'; // 更新顯示
+    $('zipBtn').addEventListener('click', async () => {
+      if (!state.results.length) return;
+      const zip = new JSZip();
+      state.results.forEach((r, i) => zip.file(`${pad(i + 1)}.png`, r.url.split(',')[1], { base64: true }));
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'line_stickers.zip';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     });
 
-    // 處理滑塊變化，調整裁剪框大小
-    scaleSlider.addEventListener('input', function () {
-      const size = parseInt(scaleSlider.value);
-      scaleValueSpan.textContent = size; // 更新顯示數值
-      if (cropper) {
-        // 設置裁剪框的大小，同時保持中心位置不變（ Cropper.js 默認行為）
-        cropper.setCropBoxData({ width: size, height: size });
-      }
-    });
+    renderResults();
   </script>
 </body>
 </html>
