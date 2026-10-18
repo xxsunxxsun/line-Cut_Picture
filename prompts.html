@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<title>LINE 貼圖 GPT 指令集</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+  /* 版面概念：整頁像一張「貼圖排版底稿」—— 淺灰底，每個區塊是帶白色描邊的貼紙卡片 */
+  :root {
+    --sheet: #e6e6e6;        /* 與指令建議的背景色相同 */
+    --sticker: #ffffff;
+    --rim: #ffffff;
+    --ink: #24262b;
+    --muted: #61656e;
+    --line: #d2d4d8;
+    --accent: #e8467c;       /* 貼圖裡常見的愛心粉 */
+    --accent-soft: #fde4ec;
+    --code-bg: #f4f5f7;
+    --ok: #2e9e5b;
+    --shadow: 0 1px 0 rgba(0,0,0,.04), 0 6px 18px rgba(30,32,40,.08);
+    --display: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    --body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --sheet: #1b1c20; --sticker: #26282d; --rim: #3a3d44; --ink: #eceef2; --muted: #a3a8b2;
+      --line: #3a3d44; --accent: #ff6f9c; --accent-soft: #46222f; --code-bg: #1f2125; --ok: #5ccf8a;
+      --shadow: 0 6px 18px rgba(0,0,0,.35); color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --sheet: #1b1c20; --sticker: #26282d; --rim: #3a3d44; --ink: #eceef2; --muted: #a3a8b2;
+    --line: #3a3d44; --accent: #ff6f9c; --accent-soft: #46222f; --code-bg: #1f2125; --ok: #5ccf8a;
+    --shadow: 0 6px 18px rgba(0,0,0,.35); color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--sheet); color: var(--ink); font-family: var(--body);
+    font-size: 16px; line-height: 1.7;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 16px 64px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+  /* 貼紙卡片：白色描邊 + 圓角 */
+  .sticker {
+    background: var(--sticker); border: 6px solid var(--rim); border-radius: 22px;
+    box-shadow: var(--shadow); padding: 24px; min-width: 0;
+  }
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.3; margin: 0; }
+  h1 { font-size: clamp(30px, 6vw, 46px); font-weight: 900; letter-spacing: .02em; }
+  h2 { font-size: 23px; font-weight: 900; display: flex; align-items: center; gap: 10px; }
+  h3 { font-size: 17px; font-weight: 700; }
+  p { margin: 0; }
+  .muted { color: var(--muted); }
+  .stack { display: flex; flex-direction: column; gap: 14px; }
+
+  /* 開頭 */
+  .hero { display: flex; flex-direction: column; gap: 14px; padding-top: 30px; }
+  .hero .tag {
+    align-self: flex-start; font-size: 13px; font-weight: 700; letter-spacing: .12em;
+    color: var(--accent); background: var(--accent-soft); padding: 4px 12px; border-radius: 999px;
+  }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 6px; }
+  .flow div {
+    border: 2px dashed var(--line); border-radius: 14px; padding: 12px; font-size: 14px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .flow b { font-size: 13px; color: var(--accent); letter-spacing: .08em; }
+
+  .step-no {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff;
+    display: inline-grid; place-items: center; font-size: 16px; flex: none;
+  }
+
+  /* 原則 */
+  .rules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .rule { border-top: 3px solid var(--ink); padding-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+  .rule p { font-size: 15px; color: var(--muted); }
+
+  /* 指令框 */
+  .prompt { position: relative; background: var(--code-bg); border: 1px solid var(--line); border-radius: 14px; }
+  .prompt pre {
+    margin: 0; padding: 18px 18px 18px; white-space: pre-wrap; word-break: break-word;
+    font-family: var(--body); font-size: 15px; line-height: 1.75; max-height: 520px; overflow: auto;
+  }
+  .prompt-bar {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 8px 10px 8px 16px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted);
+  }
+  .copy {
+    font: inherit; font-size: 14px; font-weight: 700; border: none; border-radius: 999px; cursor: pointer;
+    padding: 7px 16px; background: var(--accent); color: #fff; transition: transform .1s;
+  }
+  .copy:hover { transform: translateY(-1px); }
+  .copy:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .copy.done { background: var(--ok); }
+
+  /* 切換 */
+  .seg { display: inline-flex; background: var(--code-bg); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 4px; flex-wrap: wrap; }
+  .seg button {
+    font: inherit; font-size: 14px; border: none; background: transparent; color: var(--muted);
+    padding: 6px 14px; border-radius: 999px; cursor: pointer; font-weight: 500;
+  }
+  .seg button[aria-pressed="true"] { background: var(--sticker); color: var(--ink); font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+
+  /* 產生器 */
+  .controls { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: end; }
+  .ctl { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  select, input[type="text"] {
+    font: inherit; font-size: 15px; color: var(--ink); background: var(--sticker);
+    border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; min-width: 0;
+  }
+  .phrases { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+  .phrase { display: grid; grid-template-columns: 26px minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 6px; align-items: center; }
+  .phrase span { font-size: 13px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+  .phrase input { width: 100%; }
+
+  /* 補救指令 */
+  .fixes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .fix { border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .fix h3 { font-size: 15px; }
+  .fix q { quotes: none; font-size: 14px; background: var(--code-bg); border-radius: 8px; padding: 8px 10px; display: block; }
+  .fix .copy { align-self: flex-start; padding: 5px 12px; font-size: 13px; }
+
+  /* 表格 */
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 13px; color: var(--muted); font-weight: 700; letter-spacing: .06em; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 700; }
+
+  .note { border-left: 4px solid var(--accent); background: var(--accent-soft); border-radius: 0 12px 12px 0; padding: 12px 16px; font-size: 15px; }
+  footer { text-align: center; font-size: 13px; color: var(--muted); }
+
+  @media (max-width: 680px) {
+    .flow, .rules, .fixes, .phrases { grid-template-columns: 1fr 1fr; }
+    .phrases { grid-template-columns: 1fr; }
+    .fixes { grid-template-columns: 1fr; }
+    .sticker { padding: 18px; border-width: 5px; }
+  }
+  @media (max-width: 420px) { .flow, .rules { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce) { .copy { transition: none; } }
+
+  /* 網站導航列（與其他頁面一致） */
+  nav.site { width: 100%; padding: 0 0 8px; }
+  nav.site div { max-width: 860px; margin: 0 auto; display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  nav.site a {
+    padding: 10px 20px; border: 2px solid #64b5f6; background: #e3f2fd; color: #01579b;
+    text-decoration: none; font-weight: bold; font-size: 16px; border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,.1); min-width: 120px; text-align: center;
+    transition: background-color .2s, box-shadow .2s;
+  }
+  nav.site a:hover { background: #bbdefb; box-shadow: 0 4px 8px rgba(0,0,0,.15); }
+  nav.site a[aria-current="page"] { background: #64b5f6; color: #fff; }
+  @media (max-width: 600px) { nav.site a { min-width: unset; flex-grow: 1; padding: 8px 12px; font-size: 15px; } }
+  .cta {
+    align-self: flex-start; display: inline-block; padding: 12px 24px; border-radius: 999px;
+    background: var(--accent); color: #fff; font-weight: 700; text-decoration: none;
+  }
+  .cta:hover { filter: brightness(1.05); }
+</style>
+</head>
+<body>
+<nav class="site">
+    <div>
+      <a href="./index.html">🏠 主頁</a>
+      <a href="./sticker.html">✂️ 貼圖裁切</a>
+      <a href="./cropper.html">📑Main & Tab 切割</a>
+      <a href="./prompts.html" aria-current="page">📝 GPT 指令集</a>
+    </div>
+  </nav>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="tag">GPT × LINE 貼圖</span>
+    <h1>上傳一張照片，<br>做出一整套<em>自己的貼圖</em></h1>
+    <p class="muted">複製下面的指令貼到 ChatGPT，照順序做就好。版面都已經幫你設定成好裁切、好去背的格式，產生的圖可以直接用<a href="./sticker.html" style="color:var(--accent)">貼圖裁切工具</a>一次切好。</p>
+    <div class="flow" aria-label="製作流程">
+      <div><b>STEP 1</b>上傳照片，生成角色</div>
+      <div><b>STEP 2</b>每次產生 8 或 9 張貼圖</div>
+      <div><b>STEP 3</b>換句子，做下一批</div>
+      <div><b>STEP 4</b>裁切、去背、上架</div>
+    </div>
+  </header>
+
+  <section class="sticker stack" aria-labelledby="rules-h">
+    <h2 id="rules-h">先知道這 4 件事，成功率高很多</h2>
+    <div class="rules">
+      <div class="rule"><h3>一張圖只放 8–9 張</h3><p>LINE 貼圖要 370×320。一張 1024 的圖塞 25 張，每張只剩 200 多 px，放大後會糊。橫式 1536×1024 排 4×2，每張約 380px；正方形九宮格 3×3，每張約 340px，都夠用。</p></div>
+      <div class="rule"><h3>背景用純淺灰色</h3><p>不要用白色或米白。貼圖有白色描邊，背景太白會分不出來，去背時會連描邊一起去掉。</p></div>
+      <div class="rule"><h3>貼圖之間要留空隙</h3><p>不要格線、不要外框、不要重疊。裁切工具是靠空白來判斷哪裡是一張貼圖。</p></div>
+      <div class="rule"><h3>文字用「」框起來</h3><p>GPT 寫中文偶爾會錯字。每句話都框好，產出後檢查一下。錯太多就不放字，之後再用 Canva 加。</p></div>
+    </div>
+  </section>
+
+  <section class="sticker stack" aria-labelledby="s1-h">
+    <h2 id="s1-h"><span class="step-no">1</span>生成角色</h2>
+    <p class="muted">先把角色定下來，之後每一批貼圖長相才會一致。<strong>調到滿意再往下做。</strong></p>
+    <div class="seg" role="group" aria-label="角色來源">
+      <button type="button" id="srcPhoto" aria-pressed="true">我有照片</button>
+      <button type="button" id="srcText" aria-pressed="false">用文字描述角色</button>
+    </div>
+    <div class="prompt">
+      <div class="prompt-bar"><span id="p1Label">先上傳照片，再貼上這段</span><button type="button" class="copy" data-target="p1">複製</button></div>
+      <pre id="p1"></pre>
+    </div>
+    <p class="muted" style="font-size:14px">照片小提醒：正面、五官清楚、光線均勻，畫面裡只有一個人。可以一次上傳 2–3 張不同角度的照片，長相會更穩定。</p>
+  </section>
+
+  <section class="sticker stack" aria-labelledby="s2-h">
+    <h2 id="s2-h"><span class="step-no">2</span>產生一批貼圖</h2>
+    <p class="muted">選版面和主題，或直接修改下面的句子和動作，指令會自動更新。</p>
+    <div class="controls">
+      <label class="ctl">版面
+        <select id="layout">
+          <option value="8">4×2 共 8 張（畫質最好）</option>
+          <option value="9">3×3 九宮格 共 9 張</option>
+        </select>
+      </label>
+      <label class="ctl">主題包
+        <select id="pack">
+          <option value="office">上班族</option>
+          <option value="daily">日常問候</option>
+          <option value="family">家人長輩</option>
+          <option value="couple">情侶</option>
+          <option value="service">服務業</option>
+        </select>
+      </label>
+      <label class="ctl">背景色
+        <select id="bg">
+          <option value="純淺灰色（#E6E6E6）">淺灰（推薦）</option>
+          <option value="純淺藍色（#DCEBFA）">淺藍</option>
+          <option value="純綠色（#00B140）">綠幕（去背最乾淨）</option>
+        </select>
+      </label>
+      <label class="ctl">文字風格
+        <select id="font">
+          <option value="黑色粗體手寫風">黑色粗體手寫風</option>
+          <option value="彩色圓體可愛字">彩色圓體可愛字</option>
+          <option value="不要放任何文字">不放字（之後自己加）</option>
+        </select>
+      </label>
+    </div>
+    <div class="phrases" id="phrases"></div>
+    <p class="muted" id="nineNote" style="font-size:14px" hidden>九宮格小提醒：LINE 張數要是 8 的倍數（8、16、24…），9 張裡挑最好的 8 張上架，多出來的一張剛好拿來做主要圖片（240×240）。</p>
+    <div class="prompt">
+      <div class="prompt-bar"><span>貼到同一個對話裡</span><button type="button" class="copy" data-target="p2">複製</button></div>
+      <pre id="p2"></pre>
+    </div>
+  </section>
+
+  <section class="sticker stack" aria-labelledby="s3-h">
+    <h2 id="s3-h"><span class="step-no">3</span>做下一批（16、24、32、40 張）</h2>
+    <p class="muted"><strong>在同一個對話裡繼續做最好</strong>，GPT 才記得角色。在上面換一組句子，複製第 2 步的指令，前面加上「角色、畫風、版面都和上一張完全一樣」就好。</p>
+    <p class="muted">如果開了新對話，就先重新上傳<strong>角色設定圖</strong>，再貼這段：</p>
+    <div class="prompt">
+      <div class="prompt-bar"><span>新對話用</span><button type="button" class="copy" data-target="p3">複製</button></div>
+      <pre id="p3"></pre>
+    </div>
+  </section>
+
+  <section class="sticker stack" aria-labelledby="fix-h">
+    <h2 id="fix-h">出問題時，補一句就好</h2>
+    <div class="fixes">
+      <div class="fix"><h3>角色越畫越不像</h3><q>角色的臉型、髮型、服裝必須和第一張角色設定圖完全一致，請重畫。</q><button type="button" class="copy">複製</button></div>
+      <div class="fix"><h3>不像照片本人</h3><q>請再對照我上傳的照片，修正臉部特徵：眼睛形狀、臉型、髮型要更像。</q><button type="button" class="copy">複製</button></div>
+      <div class="fix"><h3>貼圖黏在一起</h3><q>每張貼圖之間的空隙加大到 60px 以上，不可以互相碰到。</q><button type="button" class="copy">複製</button></div>
+      <div class="fix"><h3>文字寫錯</h3><q>第 3 張的文字改成「謝謝您」，其他地方完全不要動。</q><button type="button" class="copy">複製</button></div>
+      <div class="fix"><h3>背景有漸層或陰影</h3><q>背景必須是單一純色，完全沒有漸層、陰影或花紋。</q><button type="button" class="copy">複製</button></div>
+      <div class="fix"><h3>張數不對</h3><q>請剛好畫我指定的張數，照指定的欄數和列數排列，不要多也不要少。</q><button type="button" class="copy">複製</button></div>
+    </div>
+  </section>
+
+  <section class="sticker stack" aria-labelledby="s4-h">
+    <h2 id="s4-h"><span class="step-no">4</span>裁切與上架規格</h2>
+    <p class="muted">把產生的圖放進裁切工具，用「自動偵測位置」就能一次切好。建議設定：</p>
+    <a class="cta" href="./sticker.html">✂️ 前往貼圖裁切工具</a>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>設定</th><th>建議值</th></tr></thead>
+        <tbody>
+          <tr><td>尺寸</td><td>LINE 貼圖 370×320</td></tr>
+          <tr><td>留白</td><td>10px</td></tr>
+          <tr><td>智慧置中</td><td>開啟</td></tr>
+          <tr><td>背景去背</td><td>開啟。灰色、綠色背景容許度設 30–40；米白背景要降到 5，才不會吃掉白色描邊</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3 style="margin-top:6px">LINE Creators Market 上架需要的圖</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>圖片</th><th>尺寸</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td>貼圖</td><td class="num">最大 370×320</td><td>8 / 16 / 24 / 32 / 40 張，檔名 01.png、02.png…</td></tr>
+          <tr><td>主要圖片</td><td class="num">240×240</td><td>貼圖小舖的封面，挑最有代表性的一張</td></tr>
+          <tr><td>聊天室標籤</td><td class="num">96×74</td><td>聊天室貼圖選單上的小圖示</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="font-size:14px">共通規格：PNG、透明背景、寬高為偶數、每張 1MB 以內、圖案和邊緣之間留約 10px。</p>
+  </section>
+
+  <section class="note">
+    <strong>肖像權提醒：</strong>用自己的照片沒問題。如果用朋友、家人或小孩的照片，要先取得對方同意。藝人、名人的照片和其他人的角色都不能拿來做，LINE 審核也可能要求你證明有使用權。
+  </section>
+
+  <footer>指令可自由分享使用</footer>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  // ---------- 第 1 步：角色指令 ----------
+  const P1 = {
+    photo: `請根據我上傳的照片，設計一個 LINE 貼圖角色：
+- 保留照片中人物的特徵：臉型、髮型、髮色、眼睛形狀、眉毛，以及特色（例如酒窩、痣、眼鏡）
+- 服裝：照照片上的穿著
+- 畫風：3D 可愛 Q 版，大頭小身體，柔和光線，精緻質感
+- 讓人一看就認得出是照片中的人，但要可愛化
+
+先畫一張正面半身的角色設定圖，背景是純淺灰色（#E6E6E6）。`,
+    text: `請幫我設計一個 LINE 貼圖角色，之後所有貼圖都用這個角色：
+- 角色：（例：20 多歲的女生，深棕色微捲長髮綁低馬尾，大眼睛、粉嫩臉頰）
+- 服裝：（例：灰色西裝外套、白襯衫、胸前名牌）
+- 畫風：3D 可愛 Q 版，大頭小身體，柔和光線，精緻質感
+
+先畫一張正面半身的角色設定圖，背景是純淺灰色（#E6E6E6）。`
+  };
+  function setSource(mode) {
+    $('srcPhoto').setAttribute('aria-pressed', mode === 'photo');
+    $('srcText').setAttribute('aria-pressed', mode === 'text');
+    $('p1').textContent = P1[mode];
+    $('p1Label').textContent = mode === 'photo' ? '先上傳照片，再貼上這段' : '把括號裡的內容改成你的角色';
+  }
+  $('srcPhoto').onclick = () => setSource('photo');
+  $('srcText').onclick = () => setSource('text');
+  setSource('photo');
+
+  // ---------- 第 2 步：產生器 ----------
+  const PACKS = {
+    office: [['早安', '揮手微笑'], ['收到', '比 OK 手勢'], ['謝謝您', '雙手合十鞠躬'], ['辛苦了', '眨眼比 YA'],
+             ['真的假的?!', '驚訝摀嘴'], ['好累…', '趴在桌上'], ['請稍等', '拿著電話'], ['下班啦!', '拉行李箱開心跳起來'], ['加油!', '握拳比加油']],
+    daily:  [['早安', '伸懶腰打哈欠'], ['晚安', '抱著枕頭睡覺'], ['哈哈哈', '笑到流眼淚'], ['好喔', '比讚'],
+             ['不要', '雙手比叉'], ['想你', '抱著大愛心'], ['肚子餓', '拿著碗筷流口水'], ['掰掰', '揮手轉身離開'], ['好開心', '雙手舉高跳起來']],
+    family: [['早安平安', '捧著一束花'], ['吃飽沒?', '端著飯碗'], ['注意身體', '握拳比加油'], ['好的', '點頭微笑'],
+             ['謝謝', '鞠躬'], ['生日快樂', '捧著蛋糕'], ['收到', '比 OK 手勢'], ['晚安', '關燈蓋被子'], ['出門小心', '揮手送別']],
+    couple: [['愛你', '雙手比愛心'], ['想你', '抱著枕頭發呆'], ['生氣了', '鼓起臉頰叉腰'], ['對不起', '雙手合十低頭'],
+             ['抱抱', '張開雙手'], ['在幹嘛?', '從旁邊探頭偷看'], ['親一個', '嘟嘴'], ['晚安寶貝', '蓋被子揮手'], ['好想見你', '看著手機等訊息']],
+    service:[['歡迎光臨', '雙手合十微笑'], ['請稍等', '拿著電話'], ['馬上處理', '敬禮'], ['謝謝光臨', '鞠躬'],
+             ['不好意思', '舉著道歉牌'], ['沒問題', '比讚'], ['已幫您記錄', '拿著資料夾打勾'], ['辛苦了', '眨眼比 YA'], ['歡迎再來', '揮手微笑']]
+  };
+
+  function renderPhrases() {
+    const box = $('phrases');
+    box.innerHTML = '';
+    $('nineNote').hidden = count() !== 9;
+    PACKS[$('pack').value].slice(0, count()).forEach(([text, act], i) => {
+      const row = document.createElement('div');
+      row.className = 'phrase';
+      row.innerHTML = `<span>${i + 1}</span>
+        <input type="text" id="t${i}" aria-label="第 ${i + 1} 張的文字">
+        <input type="text" id="a${i}" aria-label="第 ${i + 1} 張的動作">`;
+      box.appendChild(row);
+      $('t' + i).value = text;
+      $('a' + i).value = act;
+    });
+    box.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updatePrompts));
+    updatePrompts();
+  }
+
+  function contentLines() {
+    const noText = $('font').value === '不要放任何文字';
+    return Array.from({ length: count() }, (_, i) => {
+      const t = $('t' + i).value.trim(), a = $('a' + i).value.trim();
+      return noText || !t ? `${i + 1}. ${a}` : `${i + 1}. 「${t}」— ${a}`;
+    }).join('\n');
+  }
+
+  function layoutBlock() {
+    const size = count() === 9 ? '正方形 1024×1024，3 欄 × 3 列（九宮格），共 9 張貼圖' : '橫式 1536×1024，4 欄 × 2 列，共 8 張貼圖';
+    return `【版面】
+- ${size}
+- 每張貼圖大小一致、平均排列，彼此之間至少留 40px 空隙
+- 貼圖不可重疊、不可超出畫面邊緣
+- 不要格線、不要外框、不要編號
+
+【背景】
+- 整張背景是${$('bg').value}，不要漸層、陰影或花紋
+- 每張貼圖有一圈白色描邊（貼紙感）`;
+  }
+
+  function textBlock() {
+    const f = $('font').value;
+    if (f === '不要放任何文字') return `【文字】
+- 不要放任何文字，只畫角色的表情和動作`;
+    return `【文字】
+- 文字用${f}，放在角色旁邊，不要擋到臉
+- 請完全照我寫的字，不要改字、不要加字`;
+  }
+
+  function updatePrompts() {
+    $('p2').textContent = `用剛剛定稿的角色（長相必須和角色設定圖完全一致），生成一張 LINE 貼圖排版圖：
+
+${layoutBlock()}
+
+【內容】（由左到右、由上到下）
+${contentLines()}
+
+${textBlock()}`;
+
+    $('p3').textContent = `這是我的 LINE 貼圖角色設定圖，請完全照這個角色的長相、服裝、畫風，生成一張貼圖排版圖：
+
+${layoutBlock()}
+
+【內容】（由左到右、由上到下）
+${contentLines()}
+
+${textBlock()}`;
+  }
+
+  const count = () => Number($('layout').value);
+  $('layout').addEventListener('change', renderPhrases);
+  $('pack').addEventListener('change', renderPhrases);
+  $('bg').addEventListener('change', updatePrompts);
+  $('font').addEventListener('change', updatePrompts);
+  renderPhrases();
+
+  // ---------- 複製 ----------
+  function selectText(el) {
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    const s = getSelection();
+    s.removeAllRanges();
+    s.addRange(r);
+  }
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.copy');
+    if (!btn) return;
+    const src = btn.dataset.target ? $(btn.dataset.target) : btn.parentElement.querySelector('q');
+    const done = ok => {
+      const old = btn.dataset.label || btn.textContent;
+      btn.dataset.label = old;
+      btn.textContent = ok ? '已複製 ✓' : '已選取，請按 Ctrl+C';
+      btn.classList.toggle('done', ok);
+      setTimeout(() => { btn.textContent = old; btn.classList.remove('done'); }, 1800);
+    };
+    try {
+      navigator.clipboard.writeText(src.textContent).then(() => done(true), () => { selectText(src); done(false); });
+    } catch (err) {
+      selectText(src);
+      done(false);
+    }
+  });
+</script>
+
+</body>
+</html>
