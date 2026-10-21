@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LINE Main & Tab 裁切工具</title>
+  <script src="./mobile.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
@@ -83,6 +84,8 @@
     }
     .btn-download:hover { background: linear-gradient(to right, #42a5f5, #2196f3); }
     .btn-download[hidden] { display: none; }
+    .btn-share { background: linear-gradient(to right, #81c784, #66bb6a); }
+    .btn-share:hover { background: linear-gradient(to right, #66bb6a, #4caf50); }
 
     .info {
       margin-top: 24px; padding: 15px; background: #f5f5f5; border-radius: 8px;
@@ -132,6 +135,7 @@
         <div class="margin-row"><label for="mainMargin">留白</label><input type="number" id="mainMargin" value="8" min="0" max="60"> px</div>
         <div class="stage"><canvas id="mainCanvas" width="240" height="240"></canvas></div>
         <a class="btn-download" id="mainDownload" download="main.png" hidden>⬇ 下載 main.png</a>
+        <button class="btn-download btn-share" id="mainShare" hidden>📤 分享 / 存到相簿</button>
       </div>
 
       <div class="section" id="sec-tab">
@@ -142,6 +146,7 @@
         <div class="margin-row"><label for="tabMargin">留白</label><input type="number" id="tabMargin" value="2" min="0" max="20"> px</div>
         <div class="stage"><canvas id="tabCanvas" width="96" height="74"></canvas></div>
         <a class="btn-download" id="tabDownload" download="tab.png" hidden>⬇ 下載 tab.png</a>
+        <button class="btn-download btn-share" id="tabShare" hidden>📤 分享 / 存到相簿</button>
       </div>
     </div>
 
@@ -199,6 +204,36 @@
       return maxX < 0 ? null : { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
     }
 
+    // LINE 規格要求 72dpi 以上，瀏覽器產生的 PNG 沒有 dpi 資訊，這裡補上 72dpi（pHYs 區塊）
+    const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      return c >>> 0;
+    });
+    function crc32(bytes) {
+      let c = 0xffffffff;
+      for (const b of bytes) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8);
+      return (c ^ 0xffffffff) >>> 0;
+    }
+    function pngWithDpi(canvas, dpi = 72) {
+      const bin = atob(canvas.toDataURL('image/png').split(',')[1]);
+      const png = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+      const ppm = Math.round(dpi / 0.0254);
+      const chunk = new Uint8Array(21);
+      const dv = new DataView(chunk.buffer);
+      dv.setUint32(0, 9);
+      chunk.set([0x70, 0x48, 0x59, 0x73], 4);
+      dv.setUint32(8, ppm); dv.setUint32(12, ppm); chunk[16] = 1;
+      dv.setUint32(17, crc32(chunk.subarray(4, 17)));
+      const out = new Uint8Array(png.length + 21);
+      out.set(png.subarray(0, 33));
+      out.set(chunk, 33);
+      out.set(png.subarray(33), 54);
+      let s = '';
+      for (let i = 0; i < out.length; i += 0x8000) s += String.fromCharCode.apply(null, out.subarray(i, i + 0x8000));
+      return 'data:image/png;base64,' + btoa(s);
+    }
+
     // 把圖片等比縮放置中到目標尺寸
     function render(img, canvas, margin) {
       const removeBg = $('optRemoveBg').checked, trim = $('optTrim').checked;
@@ -225,13 +260,19 @@
     function setupUploader(key) {
       const section = $('sec-' + key), input = $(key + 'Upload'), canvas = $(key + 'Canvas');
       const area = section.querySelector('.upload-area'), dl = $(key + 'Download'), marginInput = $(key + 'Margin');
+      const share = $(key + 'Share');
+      share.addEventListener('click', async () => {
+        const file = new File([dataURLToBlob(dl.href)], key + '.png', { type: 'image/png' });
+        try { await navigator.share({ files: [file] }); } catch (err) { /* 使用者取消 */ }
+      });
       let img = null;
 
       const redraw = () => {
         if (!img) return;
         render(img, canvas, Math.max(0, Number(marginInput.value) || 0));
-        dl.href = canvas.toDataURL('image/png');
+        dl.href = pngWithDpi(canvas);
         dl.hidden = false;
+        share.hidden = !canShareFiles();
       };
       const load = file => {
         if (!file || !file.type.startsWith('image/')) return;

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LINE 貼圖裁剪工具</title>
+  <script src="./mobile.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
   <style>
     :root {
@@ -133,11 +134,26 @@
       border-radius: 5px; font-weight: bold; font-size: 14px; text-align: center;
     }
     .downloadBtn:hover { background: var(--green); }
+    .card-actions { display: flex; gap: 6px; width: 100%; }
+    .card-actions .downloadBtn, .card-actions .shareOne { flex: 1; min-width: 0; white-space: nowrap; padding: 7px 2px; font-size: 13px; }
+    .shareOne {
+      flex: 1; padding: 7px 6px; border: none; border-radius: 5px; background: var(--blue); color: #fff;
+      font-weight: bold; font-size: 14px; cursor: pointer;
+    }
+    .shareOne:hover { background: var(--blue-dark); }
     .delBtn {
       position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%;
       border: none; background: rgba(0,0,0,.45); color: #fff; cursor: pointer; font-size: 14px; line-height: 26px;
     }
     .delBtn:hover { background: var(--red); }
+    .starBtn {
+      position: absolute; top: 4px; left: 4px; height: 26px; padding: 0 9px; border-radius: 13px;
+      border: none; background: rgba(0,0,0,.35); color: #fff; cursor: pointer; font-size: 12px;
+    }
+    .starBtn:hover { background: rgba(0,0,0,.55); }
+    .preview-block.is-main { border-color: #ffb300; box-shadow: 0 0 0 2px #ffb300; }
+    .preview-block.is-main .starBtn { background: #ffb300; color: #333; font-weight: bold; }
+    #zipMsg { font-size: 14px; color: var(--muted); }
 
     .info {
       margin-top: 30px; padding: 15px; background: #f5f5f5; border-radius: 8px;
@@ -275,6 +291,8 @@
     <div class="btn-row" style="margin-top:0;margin-bottom:14px">
       <button class="btn green" id="zipBtn" disabled>📦 全部下載（ZIP）</button>
       <button class="btn gray" id="clearBtn">🗑️ 全部清除</button>
+      <button class="btn" id="shareBtn" hidden>📤 分享 / 存到相簿</button>
+      <span id="zipMsg"></span>
     </div>
     <div id="preview"></div>
     <div class="empty" id="previewEmpty">還沒有裁切結果</div>
@@ -320,8 +338,9 @@
 
     function getOptions() {
       return {
-        outW: Math.max(10, num('outW')),
-        outH: Math.max(10, num('outH')),
+        // LINE 要求寬高都是偶數
+        outW: Math.max(10, Math.round(num('outW') / 2) * 2),
+        outH: Math.max(10, Math.round(num('outH') / 2) * 2),
         margin: Math.max(0, num('margin')),
         trim: $('optTrim').checked,
         removeBg: $('optRemoveBg').checked,
@@ -837,9 +856,70 @@
     // ---------- 結果 ----------
     // 同步產生 PNG，確保結果順序和裁切順序一致
     function addResult(canvas) {
-      state.results.push({ canvas, url: canvas.toDataURL('image/png') });
+      state.results.push({ canvas, url: pngWithDpi(canvas) });
       renderResults();
     }
+
+    // LINE 規格要求 72dpi 以上，但瀏覽器產生的 PNG 沒有 dpi 資訊，這裡補上 72dpi（pHYs 區塊）
+    const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      return c >>> 0;
+    });
+    function crc32(bytes) {
+      let c = 0xffffffff;
+      for (const b of bytes) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8);
+      return (c ^ 0xffffffff) >>> 0;
+    }
+    function pngWithDpi(canvas, dpi = 72) {
+      const bin = atob(canvas.toDataURL('image/png').split(',')[1]);
+      const png = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+      const ppm = Math.round(dpi / 0.0254); // 每公尺像素數
+      const chunk = new Uint8Array(21);
+      const dv = new DataView(chunk.buffer);
+      dv.setUint32(0, 9);
+      chunk.set([0x70, 0x48, 0x59, 0x73], 4); // "pHYs"
+      dv.setUint32(8, ppm); dv.setUint32(12, ppm); chunk[16] = 1;
+      dv.setUint32(17, crc32(chunk.subarray(4, 17)));
+      const out = new Uint8Array(png.length + 21);
+      out.set(png.subarray(0, 33));           // PNG 簽名 + IHDR
+      out.set(chunk, 33);
+      out.set(png.subarray(33), 54);
+      let s = '';
+      for (let i = 0; i < out.length; i += 0x8000) s += String.fromCharCode.apply(null, out.subarray(i, i + 0x8000));
+      return 'data:image/png;base64,' + btoa(s);
+    }
+
+    // 從選定的貼圖做出 main.png（240×240）和 tab.png（96×74）
+    function fitCanvas(src, W, H, margin) {
+      const ctx = src.getContext('2d');
+      const d = ctx.getImageData(0, 0, src.width, src.height);
+      const box = contentBox(d, [0, 0, 0, 0], 0, true) || { x: 0, y: 0, w: src.width, h: src.height };
+      const out = document.createElement('canvas');
+      out.width = W; out.height = H;
+      const o = out.getContext('2d');
+      const scale = Math.min((W - margin * 2) / box.w, (H - margin * 2) / box.h);
+      const dw = box.w * scale, dh = box.h * scale;
+      o.imageSmoothingQuality = 'high';
+      o.drawImage(src, box.x, box.y, box.w, box.h, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      return out;
+    }
+
+    state.mainIndex = 0;
+
+    // iOS Safari 與安卓 Chrome：開啟手機的分享選單，可以存到相簿，或傳到 LINE 貼圖製作等 App
+    const shareSupported = canShareFiles();
+    async function shareStickers(indexes) {
+      // 檔案要在點擊當下同步準備好，iOS 才會允許開啟分享選單
+      const files = indexes.map(i => new File([dataURLToBlob(state.results[i].url)], `${pad(i + 1)}.png`, { type: 'image/png' }));
+      if (!files.length) return;
+      try {
+        await navigator.share({ files });
+      } catch (err) {
+        if (err.name !== 'AbortError') toast('分享失敗，請改用「⬇ 下載」');
+      }
+    }
+    const LINE_COUNTS = [8, 16, 24, 32, 40];
 
     function renderResults() {
       const preview = $('preview');
@@ -854,8 +934,15 @@
         del.title = '刪除這張';
         del.onclick = () => {
           state.results.splice(i, 1);
+          if (state.mainIndex > i || state.mainIndex >= state.results.length) state.mainIndex = Math.max(0, state.mainIndex - 1);
           renderResults();
         };
+        const star = document.createElement('button');
+        star.className = 'starBtn';
+        star.textContent = i === state.mainIndex ? '⭐ 主圖' : '☆ 設為主圖';
+        star.title = '用這張做 main.png 和 tab.png';
+        star.onclick = () => { state.mainIndex = i; renderResults(); };
+        if (i === state.mainIndex) block.classList.add('is-main');
         const label = document.createElement('div');
         label.className = 'name';
         label.textContent = `${name}（${r.canvas.width}×${r.canvas.height}）`;
@@ -864,34 +951,50 @@
         link.href = r.url;
         link.download = name;
         link.textContent = '⬇ 下載';
-        block.append(del, r.canvas, label, link);
+        const actions = document.createElement('div');
+        actions.className = 'card-actions';
+        actions.appendChild(link);
+        if (shareSupported) {
+          const one = document.createElement('button');
+          one.className = 'shareOne';
+          one.textContent = '📤 分享';
+          one.onclick = () => shareStickers([i]);
+          actions.appendChild(one);
+        }
+        block.append(del, star, r.canvas, label, actions);
         preview.appendChild(block);
       });
 
       const n = state.results.length;
-      const ok = [8, 16, 24, 32, 40].includes(n);
+      const ok = LINE_COUNTS.includes(n);
+      $('zipMsg').textContent = n ? `ZIP 內含 01–${pad(n)}.png，加上 ⭐ 主圖做成的 main.png、tab.png` : '';
       $('countDisplay').innerHTML = `目前裁切張數：${n}` +
         (n ? ` <small>${ok ? '✅ 符合 LINE 張數' : '（LINE 需 8/16/24/32/40 張）'}</small>` : '');
       $('previewEmpty').style.display = n ? 'none' : 'block';
       $('zipBtn').disabled = !n;
+      $('shareBtn').disabled = !n;
     }
 
     $('clearBtn').addEventListener('click', () => {
       state.results = [];
+      state.mainIndex = 0;
       renderResults();
     });
 
     $('zipBtn').addEventListener('click', async () => {
       if (!state.results.length) return;
       const zip = new JSZip();
-      state.results.forEach((r, i) => zip.file(`${pad(i + 1)}.png`, r.url.split(',')[1], { base64: true }));
+      const b64 = url => url.split(',')[1];
+      state.results.forEach((r, i) => zip.file(`${pad(i + 1)}.png`, b64(r.url), { base64: true }));
+      const mainSrc = state.results[state.mainIndex].canvas;
+      zip.file('main.png', b64(pngWithDpi(fitCanvas(mainSrc, 240, 240, 4))), { base64: true });
+      zip.file('tab.png', b64(pngWithDpi(fitCanvas(mainSrc, 96, 74, 2))), { base64: true });
       const blob = await zip.generateAsync({ type: 'blob' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'line_stickers.zip';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      saveFile(blob, 'line_stickers.zip');
     });
+
+    $('shareBtn').hidden = !shareSupported;
+    $('shareBtn').addEventListener('click', () => shareStickers(state.results.map((_, i) => i)));
 
     renderResults();
   </script>
