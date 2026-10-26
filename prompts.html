@@ -121,6 +121,15 @@
   .phrase { display: grid; grid-template-columns: 26px minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 6px; align-items: center; }
   .phrase span { font-size: 13px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
   .phrase input { width: 100%; }
+  #rounds button.done::after { content: " ✓"; color: var(--ok); font-weight: 700; }
+  .btn-row-next { display: flex; justify-content: flex-end; }
+  .custom-row { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 2px dashed var(--line); border-radius: 14px; }
+  .custom-row input { width: 100%; max-width: 360px; }
+  .next-btn {
+    font: inherit; font-size: 15px; font-weight: 700; border: 2px solid var(--accent); border-radius: 999px;
+    padding: 7px 18px; background: transparent; color: var(--accent); cursor: pointer;
+  }
+  .next-btn:hover { background: var(--accent-soft); }
 
   /* 補救指令 */
   .fixes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -174,6 +183,7 @@
       <a href="./sticker.html">✂️ 貼圖裁切</a>
       <a href="./cropper.html">📑Main & Tab 切割</a>
       <a href="./prompts.html" aria-current="page">📝 GPT 指令集</a>
+      <a href="./publish.html">🚀 上架小幫手</a>
     </div>
   </nav>
 <div class="wrap">
@@ -184,8 +194,8 @@
     <p class="muted">複製下面的指令貼到 ChatGPT，照順序做就好。版面都已經幫你設定成好裁切、好去背的格式，產生的圖可以直接用<a href="./sticker.html" style="color:var(--accent)">貼圖裁切工具</a>一次切好。</p>
     <div class="flow" aria-label="製作流程">
       <div><b>STEP 1</b>上傳照片，生成角色</div>
-      <div><b>STEP 2</b>每次產生 8 或 9 張貼圖</div>
-      <div><b>STEP 3</b>換句子，做下一批</div>
+      <div><b>STEP 2</b>選情境，每次產生 9 張</div>
+      <div><b>STEP 3</b>分 4 組做完 36 張</div>
       <div><b>STEP 4</b>裁切、去背、上架</div>
     </div>
   </header>
@@ -193,8 +203,8 @@
   <section class="sticker stack" aria-labelledby="rules-h">
     <h2 id="rules-h">先知道這 4 件事，成功率高很多</h2>
     <div class="rules">
-      <div class="rule"><h3>一張圖只放 8–9 張</h3><p>LINE 貼圖要 370×320。一張 1024 的圖塞 25 張，每張只剩 200 多 px，放大後會糊。橫式 1536×1024 排 4×2，每張約 380px；正方形九宮格 3×3，每張約 340px，都夠用。</p></div>
-      <div class="rule"><h3>背景用純淺灰色</h3><p>不要用白色或米白。貼圖有白色描邊，背景太白會分不出來，去背時會連描邊一起去掉。</p></div>
+      <div class="rule"><h3>一張圖只放 9 張</h3><p>LINE 貼圖要 370×320。一張 1024 的圖塞 25 張，每張只剩 200 多 px，放大後會糊。正方形 1024×1024 排九宮格 3×3，每張約 340px，剛好夠用。</p></div>
+      <div class="rule"><h3>要透明背景的 PNG</h3><p>LINE 規定貼圖必須是去背的 PNG。指令會直接要求透明背景；GPT 做不到時改用純淺灰色，再用裁切工具去背。不要用白色或米白背景，會連白色描邊一起去掉。</p></div>
       <div class="rule"><h3>貼圖之間要留空隙</h3><p>不要格線、不要外框、不要重疊。裁切工具是靠空白來判斷哪裡是一張貼圖。</p></div>
       <div class="rule"><h3>文字用「」框起來</h3><p>GPT 寫中文偶爾會錯字。每句話都框好，產出後檢查一下。錯太多就不放字，之後再用 Canva 加。</p></div>
     </div>
@@ -207,6 +217,21 @@
       <button type="button" id="srcPhoto" aria-pressed="true">我有照片</button>
       <button type="button" id="srcText" aria-pressed="false">用文字描述角色</button>
     </div>
+    <div class="controls">
+      <label class="ctl">畫風
+        <select id="style">
+          <option value="3D 可愛 Q 版，大頭小身體，柔和光線，精緻質感">3D 可愛 Q 版</option>
+          <option value="日系手繪插畫風，線條柔和，淡淡的水彩上色">日系手繪</option>
+          <option value="韓系簡約線條風，線條乾淨、配色柔和、大量留白">韓系簡約線條</option>
+          <option value="粗黑線條的搞笑漫畫風，表情誇張、動作有張力">誇張搞笑漫畫</option>
+          <option value="水彩繪本風，溫暖柔和的色調，帶紙張質感">水彩繪本</option>
+          <option value="黏土公仔質感，圓潤可愛，像手捏的模型">黏土公仔</option>
+          <option value="扁平向量插畫風，色塊鮮明，沒有陰影">扁平插畫</option>
+          <option value="復古像素風，8-bit 遊戲感，邊緣清楚">復古像素</option>
+        </select>
+      </label>
+      <button type="button" class="next-btn" id="randomBtn">🎲 隨機挑畫風和情境</button>
+    </div>
     <div class="prompt">
       <div class="prompt-bar"><span id="p1Label">先上傳照片，再貼上這段</span><button type="button" class="copy" data-target="p1">複製</button></div>
       <pre id="p1"></pre>
@@ -215,27 +240,25 @@
   </section>
 
   <section class="sticker stack" aria-labelledby="s2-h">
-    <h2 id="s2-h"><span class="step-no">2</span>產生一批貼圖</h2>
-    <p class="muted">選版面和主題，或直接修改下面的句子和動作，指令會自動更新。</p>
+    <h2 id="s2-h"><span class="step-no">2</span>選情境，分 4 組產生 36 張</h2>
+    <p class="muted">每個情境有 36 句，分成 4 組、每組 9 張（九宮格）。想做清單沒有的主題，選「✨ 自訂情境」，讓 GPT 自動想句子。<strong>在同一個對話裡依序貼上第 1～4 組</strong>，角色才會一致。句子和動作都可以直接修改。</p>
     <div class="controls">
-      <label class="ctl">版面
-        <select id="layout">
-          <option value="8">4×2 共 8 張（畫質最好）</option>
-          <option value="9">3×3 九宮格 共 9 張</option>
-        </select>
-      </label>
-      <label class="ctl">主題包
+      <label class="ctl">情境
         <select id="pack">
-          <option value="office">上班族</option>
-          <option value="daily">日常問候</option>
+          <option value="daily">日常用語</option>
+          <option value="life">生活用語</option>
+          <option value="office">上班用語</option>
           <option value="family">家人長輩</option>
           <option value="couple">情侶</option>
           <option value="service">服務業</option>
+          <option value="festival">節日祝福</option>
+          <option value="custom">✨ 自訂情境（GPT 自動想句子）</option>
         </select>
       </label>
       <label class="ctl">背景色
         <select id="bg">
-          <option value="純淺灰色（#E6E6E6）">淺灰（推薦）</option>
+          <option value="transparent">透明背景 PNG（推薦）</option>
+          <option value="純淺灰色（#E6E6E6）">淺灰</option>
           <option value="純淺藍色（#DCEBFA）">淺藍</option>
           <option value="純綠色（#00B140）">綠幕（去背最乾淨）</option>
         </select>
@@ -248,20 +271,34 @@
         </select>
       </label>
     </div>
+    <div class="custom-row" id="customRow" hidden>
+      <label class="ctl">自訂情境名稱
+        <input type="text" id="customTheme" value="寵物店" placeholder="例：寵物店、健身教練、學生日常、追星族">
+      </label>
+      <p class="muted" style="font-size:14px">輸入任何情境，GPT 會自己想 36 句適合的用語。第 1 組會先列出全部 36 句再開始畫，第 2～4 組照著清單畫下去。</p>
+    </div>
+    <div class="seg" role="group" aria-label="選擇第幾組" id="rounds">
+      <button type="button" data-round="0" aria-pressed="true">第 1 組（1–9）</button>
+      <button type="button" data-round="1" aria-pressed="false">第 2 組（10–18）</button>
+      <button type="button" data-round="2" aria-pressed="false">第 3 組（19–27）</button>
+      <button type="button" data-round="3" aria-pressed="false">第 4 組（28–36）</button>
+    </div>
     <div class="phrases" id="phrases"></div>
-    <p class="muted" id="nineNote" style="font-size:14px" hidden>九宮格小提醒：LINE 張數要是 8 的倍數（8、16、24…），9 張裡挑最好的 8 張上架，多出來的一張剛好拿來做主要圖片（240×240）。</p>
     <div class="prompt">
-      <div class="prompt-bar"><span>貼到同一個對話裡</span><button type="button" class="copy" data-target="p2">複製</button></div>
+      <div class="prompt-bar"><span id="p2Label">貼到同一個對話裡</span><button type="button" class="copy" data-target="p2" id="copyP2">複製</button></div>
       <pre id="p2"></pre>
     </div>
+    <div class="btn-row-next">
+      <button type="button" class="next-btn" id="nextRound">下一組 →</button>
+    </div>
+    <p class="muted" style="font-size:14px">張數提醒：LINE 只接受 8 / 16 / 24 / 32 / 40 張。36 張做完後，挑最好的 <strong>32 張</strong>上架，多的拿來做主要圖片和標籤；或再多做 4 張湊滿 40 張。</p>
   </section>
 
   <section class="sticker stack" aria-labelledby="s3-h">
-    <h2 id="s3-h"><span class="step-no">3</span>做下一批（16、24、32、40 張）</h2>
-    <p class="muted"><strong>在同一個對話裡繼續做最好</strong>，GPT 才記得角色。在上面換一組句子，複製第 2 步的指令，前面加上「角色、畫風、版面都和上一張完全一樣」就好。</p>
-    <p class="muted">如果開了新對話，就先重新上傳<strong>角色設定圖</strong>，再貼這段：</p>
+    <h2 id="s3-h"><span class="step-no">3</span>對話中斷了？用這段接著做</h2>
+    <p class="muted">如果開了新對話，先重新上傳<strong>角色設定圖</strong>，再貼上目前這一組的指令：</p>
     <div class="prompt">
-      <div class="prompt-bar"><span>新對話用</span><button type="button" class="copy" data-target="p3">複製</button></div>
+      <div class="prompt-bar"><span id="p3Label">新對話用</span><button type="button" class="copy" data-target="p3">複製</button></div>
       <pre id="p3"></pre>
     </div>
   </section>
@@ -274,6 +311,8 @@
       <div class="fix"><h3>貼圖黏在一起</h3><q>每張貼圖之間的空隙加大到 60px 以上，不可以互相碰到。</q><button type="button" class="copy">複製</button></div>
       <div class="fix"><h3>文字寫錯</h3><q>第 3 張的文字改成「謝謝您」，其他地方完全不要動。</q><button type="button" class="copy">複製</button></div>
       <div class="fix"><h3>背景有漸層或陰影</h3><q>背景必須是單一純色，完全沒有漸層、陰影或花紋。</q><button type="button" class="copy">複製</button></div>
+      <div class="fix"><h3>背景出現棋盤格</h3><q>背景要真正透明的 PNG，不要畫出灰白棋盤格。如果做不到，請改用純淺灰色（#E6E6E6）單色背景重畫。</q><button type="button" class="copy">複製</button></div>
+      <div class="fix"><h3>背景不是透明的</h3><q>請重新輸出成去背的 PNG 檔，貼圖以外的地方完全透明，保留每張貼圖的白色描邊。</q><button type="button" class="copy">複製</button></div>
       <div class="fix"><h3>張數不對</h3><q>請剛好畫我指定的張數，照指定的欄數和列數排列，不要多也不要少。</q><button type="button" class="copy">複製</button></div>
     </div>
   </section>
@@ -289,7 +328,7 @@
           <tr><td>尺寸</td><td>LINE 貼圖 370×320</td></tr>
           <tr><td>留白</td><td>10px</td></tr>
           <tr><td>智慧置中</td><td>開啟</td></tr>
-          <tr><td>背景去背</td><td>開啟。灰色、綠色背景容許度設 30–40；米白背景要降到 5，才不會吃掉白色描邊</td></tr>
+          <tr><td>背景去背</td><td>必須開啟（LINE 規定透明背景）。淺灰、淺藍背景容許度 15，才不會吃掉白色描邊；綠幕可以到 40；米白背景要降到 5</td></tr>
         </tbody>
       </table>
     </div>
@@ -322,77 +361,183 @@
     photo: `請根據我上傳的照片，設計一個 LINE 貼圖角色：
 - 保留照片中人物的特徵：臉型、髮型、髮色、眼睛形狀、眉毛，以及特色（例如酒窩、痣、眼鏡）
 - 服裝：照照片上的穿著
-- 畫風：3D 可愛 Q 版，大頭小身體，柔和光線，精緻質感
+- 畫風：__STYLE__
 - 讓人一看就認得出是照片中的人，但要可愛化
 
 先畫一張正面半身的角色設定圖，背景是純淺灰色（#E6E6E6）。`,
     text: `請幫我設計一個 LINE 貼圖角色，之後所有貼圖都用這個角色：
 - 角色：（例：20 多歲的女生，深棕色微捲長髮綁低馬尾，大眼睛、粉嫩臉頰）
 - 服裝：（例：灰色西裝外套、白襯衫、胸前名牌）
-- 畫風：3D 可愛 Q 版，大頭小身體，柔和光線，精緻質感
+- 畫風：__STYLE__
 
 先畫一張正面半身的角色設定圖，背景是純淺灰色（#E6E6E6）。`
   };
+  let source = 'photo';
   function setSource(mode) {
+    source = mode;
     $('srcPhoto').setAttribute('aria-pressed', mode === 'photo');
     $('srcText').setAttribute('aria-pressed', mode === 'text');
-    $('p1').textContent = P1[mode];
+    $('p1').textContent = P1[mode].replace('__STYLE__', $('style').value);
     $('p1Label').textContent = mode === 'photo' ? '先上傳照片，再貼上這段' : '把括號裡的內容改成你的角色';
   }
   $('srcPhoto').onclick = () => setSource('photo');
   $('srcText').onclick = () => setSource('text');
   setSource('photo');
 
-  // ---------- 第 2 步：產生器 ----------
-  const PACKS = {
-    office: [['早安', '揮手微笑'], ['收到', '比 OK 手勢'], ['謝謝您', '雙手合十鞠躬'], ['辛苦了', '眨眼比 YA'],
-             ['真的假的?!', '驚訝摀嘴'], ['好累…', '趴在桌上'], ['請稍等', '拿著電話'], ['下班啦!', '拉行李箱開心跳起來'], ['加油!', '握拳比加油']],
-    daily:  [['早安', '伸懶腰打哈欠'], ['晚安', '抱著枕頭睡覺'], ['哈哈哈', '笑到流眼淚'], ['好喔', '比讚'],
-             ['不要', '雙手比叉'], ['想你', '抱著大愛心'], ['肚子餓', '拿著碗筷流口水'], ['掰掰', '揮手轉身離開'], ['好開心', '雙手舉高跳起來']],
-    family: [['早安平安', '捧著一束花'], ['吃飽沒?', '端著飯碗'], ['注意身體', '握拳比加油'], ['好的', '點頭微笑'],
-             ['謝謝', '鞠躬'], ['生日快樂', '捧著蛋糕'], ['收到', '比 OK 手勢'], ['晚安', '關燈蓋被子'], ['出門小心', '揮手送別']],
-    couple: [['愛你', '雙手比愛心'], ['想你', '抱著枕頭發呆'], ['生氣了', '鼓起臉頰叉腰'], ['對不起', '雙手合十低頭'],
-             ['抱抱', '張開雙手'], ['在幹嘛?', '從旁邊探頭偷看'], ['親一個', '嘟嘴'], ['晚安寶貝', '蓋被子揮手'], ['好想見你', '看著手機等訊息']],
-    service:[['歡迎光臨', '雙手合十微笑'], ['請稍等', '拿著電話'], ['馬上處理', '敬禮'], ['謝謝光臨', '鞠躬'],
-             ['不好意思', '舉著道歉牌'], ['沒問題', '比讚'], ['已幫您記錄', '拿著資料夾打勾'], ['辛苦了', '眨眼比 YA'], ['歡迎再來', '揮手微笑']]
+  // ---------- 第 2 步：產生器（每個情境 36 句，分 4 組、每組 9 張） ----------
+  const THEMES = {
+    daily: { name: "日常用語", items: [
+      ["早安", "伸懶腰揮手"], ["午安", "端著便當微笑"], ["晚安", "抱著枕頭揉眼睛"], ["謝謝", "雙手合十鞠躬"],
+      ["不客氣", "揮揮手微笑"], ["好的", "比 OK 手勢"], ["收到", "敬禮"], ["沒問題", "拍胸脯"],
+      ["哈哈哈", "笑到流眼淚"], ["真的假的?!", "驚訝摀嘴"], ["好喔", "比讚"], ["不要", "雙手比叉"],
+      ["等我一下", "伸手比暫停"], ["拜託拜託", "雙手合十眨眼"], ["對不起", "低頭雙手合十"], ["沒關係", "溫柔拍拍肩"],
+      ["辛苦了", "遞上一杯茶"], ["加油!", "握拳比加油"], ["讚啦!", "雙手比讚"], ["好累…", "癱坐在地上"],
+      ["好餓", "拿著碗筷流口水"], ["好睏", "打大哈欠"], ["怎麼辦", "抱頭慌張"], ["我想想", "托著下巴思考"],
+      ["嗯嗯", "乖巧點頭"], ["蛤?", "歪頭一臉問號"], ["傻眼", "眼睛睜大愣住"], ["無言…", "頭上冒出三條線"],
+      ["生氣了", "鼓起臉頰叉腰"], ["好開心", "雙手舉高跳起來"], ["感動", "雙手捧臉淚汪汪"], ["掰掰", "揮手轉身離開"],
+      ["明天見", "揮手眨眼"], ["在嗎?", "從旁邊探頭"], ["已讀", "拿著手機斜眼看"], ["愛你", "雙手比愛心"]
+    ] },
+    life: { name: "生活用語", items: [
+      ["吃飯了沒?", "端著飯碗"], ["我到了", "站在門口揮手"], ["出門囉", "背著包包開門"], ["回家了", "脫鞋伸懶腰"],
+      ["在路上", "快步走路看手機"], ["塞車中", "坐在車裡一臉無奈"], ["下雨了", "撐著雨傘"], ["好熱", "拿扇子狂搧"],
+      ["好冷", "裹著毛毯發抖"], ["去運動", "穿運動服舉啞鈴"], ["洗澡中", "頭上頂著泡泡"], ["睡覺囉", "蓋被子閉眼"],
+      ["起床了", "頭髮亂翹伸懶腰"], ["喝杯咖啡", "捧著咖啡杯"], ["買東西", "提著購物袋"], ["逛街去", "開心轉圈"],
+      ["追劇中", "抱著零食看平板"], ["打掃中", "拿著掃把"], ["煮飯中", "穿圍裙拿鍋鏟"], ["外送到了", "開心接過外送袋"],
+      ["吃宵夜", "吃泡麵"], ["減肥中", "看著體重計哭哭"], ["存錢中", "抱著小豬撲滿"], ["放假啦!", "戴墨鏡放鬆"],
+      ["出去玩", "拿著相機"], ["看電影", "捧著爆米花"], ["遛狗去", "牽著小狗"], ["生病了", "額頭貼著退熱貼"],
+      ["看醫生", "拿著藥袋"], ["多喝水", "舉著水壺"], ["早點睡", "指著時鐘"], ["記得帶傘", "遞出雨傘"],
+      ["路上小心", "揮手送別"], ["到家說一聲", "比電話手勢"], ["週末愉快", "跳起來比 YA"], ["好舒服", "泡在浴缸裡放鬆"]
+    ] },
+    office: { name: "上班用語", items: [
+      ["早安", "拿著公事包揮手"], ["收到", "敬禮"], ["了解", "認真點頭"], ["馬上處理", "捲起袖子"],
+      ["處理中", "快速打鍵盤"], ["已完成", "比 OK 手勢"], ["請稍等", "拿著電話"], ["麻煩你了", "雙手合十鞠躬"],
+      ["謝謝幫忙", "雙手抱拳感謝"], ["辛苦了", "遞上咖啡"], ["開會中", "拿著筆記本坐好"], ["會議結束", "伸懶腰"],
+      ["午休中", "趴在桌上睡覺"], ["加班中", "戴著眼鏡盯螢幕"], ["下班啦!", "拉著包包開心跳起來"], ["請假一天", "拿著假單"],
+      ["明天見", "揮手離開"], ["請確認", "指著文件"], ["已傳送", "按下手機送出"], ["我看一下", "推眼鏡看螢幕"],
+      ["沒問題", "拍胸脯"], ["交給我", "比讚自信微笑"], ["再討論", "托著下巴思考"], ["截止日快到了", "看著時鐘冒冷汗"],
+      ["來不及了!", "抱頭慌張"], ["老闆來了", "躲在電腦後面"], ["好忙", "手忙腳亂抱著一疊文件"], ["頭好痛", "按著太陽穴"],
+      ["需要咖啡", "抱著咖啡杯"], ["薪水入帳", "抱著錢袋開心"], ["終於週五", "舉手歡呼"], ["放假囉", "戴墨鏡放鬆"],
+      ["感謝合作", "握手微笑"], ["大家加油!", "握拳比加油"], ["有問題再問我", "比電話手勢"], ["報告完成", "舉著報告書"]
+    ] },
+    family: { name: "家人長輩", items: [
+      ["早安平安", "捧著一束花"], ["午安", "端著熱茶"], ["晚安好夢", "蓋被子閉眼"], ["吃飽沒?", "端著飯碗"],
+      ["多喝水", "舉著水杯"], ["注意身體", "握拳比加油"], ["天冷加衣", "披上外套"], ["出門小心", "揮手送別"],
+      ["平安到家", "站在家門口微笑"], ["有空回家", "張開雙手歡迎"], ["想念你們", "抱著全家福相框"], ["謝謝爸媽", "鞠躬"],
+      ["愛你們", "雙手比愛心"], ["生日快樂", "捧著蛋糕"], ["身體健康", "拿著蘋果"], ["萬事如意", "捧著如意"],
+      ["新年快樂", "拿著紅包"], ["中秋快樂", "拿著月餅"], ["母親節快樂", "送上康乃馨"], ["父親節快樂", "送上領帶禮盒"],
+      ["好的", "點頭微笑"], ["收到", "比 OK 手勢"], ["知道了", "乖巧點頭"], ["讚!", "比讚"],
+      ["恭喜恭喜", "拱手作揖"], ["祝福你", "捧著愛心"], ["開心每一天", "笑著轉圈"], ["記得吃藥", "拿著藥盒"],
+      ["早點休息", "指著時鐘"], ["週末愉快", "跳起來比 YA"], ["回來吃飯", "拿著鍋鏟揮手"], ["等你喔", "坐著托腮"],
+      ["感恩", "雙手合十"], ["平安喜樂", "捧著平安符"], ["保重", "輕輕拍拍肩"], ["我很好", "比 OK 微笑"]
+    ] },
+    couple: { name: "情侶", items: [
+      ["愛你", "雙手比愛心"], ["想你", "抱著枕頭發呆"], ["抱抱", "張開雙手"], ["親親", "嘟嘴"],
+      ["早安寶貝", "伸懶腰微笑"], ["晚安寶貝", "蓋被子揮手"], ["在幹嘛?", "從旁邊探頭偷看"], ["吃飯了沒?", "拿著便當"],
+      ["好想見你", "看著手機等訊息"], ["等你喔", "坐著托腮"], ["生氣了", "鼓起臉頰叉腰"], ["哼!", "轉頭不看"],
+      ["不理你了", "背對著蹲下"], ["對不起", "雙手合十低頭"], ["原諒我", "跪坐捧著小花"], ["你最好了", "抱著大愛心"],
+      ["好喜歡你", "害羞捧臉"], ["寶貝加油", "揮著彩球"], ["辛苦了", "摸摸頭"], ["約會吧!", "拿著兩張電影票"],
+      ["快回我", "狂按手機"], ["撒嬌", "拉著衣角眨眼"], ["吃醋了", "嘟嘴斜眼看"], ["你是我的", "伸手指著前方"],
+      ["永遠在一起", "雙手合成愛心"], ["陪我", "伸出手牽手"], ["晚點聊", "揮手比電話"], ["到家了嗎?", "拿著手機一臉擔心"],
+      ["路上小心", "揮手送別"], ["乖乖的", "摸摸頭"], ["心動", "捧著跳動的愛心"], ["好甜", "吃著糖果陶醉"],
+      ["一起吃飯", "拿著兩副碗筷"], ["和好吧", "伸出小指"], ["謝謝你", "害羞鞠躬"], ["最愛你了", "飛吻"]
+    ] },
+    service: { name: "服務業", items: [
+      ["歡迎光臨", "雙手合十微笑"], ["您好", "鞠躬打招呼"], ["請稍等", "拿著電話"], ["馬上為您處理", "捲起袖子"],
+      ["謝謝光臨", "鞠躬"], ["歡迎再來", "揮手微笑"], ["不好意思", "舉著道歉牌"], ["讓您久等了", "雙手合十低頭"],
+      ["預約成功", "拿著行事曆打勾"], ["已幫您記錄", "拿著資料夾打勾"], ["已出貨", "抱著包裹"], ["款項已收到", "拿著收據比 OK"],
+      ["請確認", "指著文件"], ["有問題請告訴我", "比電話手勢"], ["沒問題", "拍胸脯"], ["感謝支持", "雙手比愛心"],
+      ["新品上市", "捧著禮物盒"], ["限時優惠", "舉著優惠牌"], ["今日公休", "掛著休息牌"], ["營業中", "開門迎接"],
+      ["補貨中", "搬著紙箱"], ["已售完", "雙手比叉一臉抱歉"], ["收到訂單", "看著手機點頭"], ["處理中", "快速打鍵盤"],
+      ["已完成", "比 OK 手勢"], ["敬請期待", "眨眼比噓"], ["感謝回購", "捧著愛心鞠躬"], ["感謝好評", "捧著星星"],
+      ["歡迎詢問", "舉手微笑"], ["請私訊", "拿著手機指著"], ["祝您愉快", "撒花"], ["請多指教", "鞠躬"],
+      ["謝謝您的耐心", "雙手合十"], ["辛苦了", "遞上一杯茶"], ["下次見", "揮手眨眼"], ["我們下班了", "拉下鐵門揮手"]
+    ] },
+    festival: { name: "節日祝福", items: [
+      ["新年快樂", "拿著紅包"], ["恭喜發財", "拱手作揖"], ["紅包拿來", "伸手討紅包"], ["開工大吉", "捲起袖子比讚"],
+      ["元宵節快樂", "提著燈籠"], ["情人節快樂", "捧著玫瑰花"], ["兒童節快樂", "拿著棒棒糖"], ["母親節快樂", "送上康乃馨"],
+      ["端午節快樂", "拿著粽子"], ["父親節快樂", "送上領帶禮盒"], ["七夕快樂", "捧著愛心"], ["中秋節快樂", "拿著月餅賞月"],
+      ["教師節快樂", "鞠躬送花"], ["萬聖節快樂", "戴著南瓜帽"], ["聖誕快樂", "戴聖誕帽拿禮物"], ["跨年快樂", "拿著仙女棒"],
+      ["生日快樂", "捧著蛋糕"], ["結婚快樂", "撒花祝福"], ["恭喜恭喜", "拉響拉炮"], ["身體健康", "拿著蘋果"],
+      ["萬事如意", "捧著如意"], ["心想事成", "閉眼許願"], ["步步高升", "踩著樓梯往上"], ["平安喜樂", "捧著平安符"],
+      ["闔家平安", "抱著全家福相框"], ["財源滾滾", "抱著金元寶"], ["好運來", "拿著幸運草"], ["考試順利", "拿著鉛筆比加油"],
+      ["畢業快樂", "戴學士帽丟帽子"], ["早日康復", "送上花束"], ["一路順風", "拉著行李箱揮手"], ["週年快樂", "舉著香檳"],
+      ["新年新希望", "寫著願望卡"], ["感謝有你", "雙手比愛心"], ["節日快樂", "撒彩帶"], ["祝福滿滿", "捧著禮物盒"]
+    ] }
   };
+
+  // 使用者修改過的句子，依情境各存一份（切換情境再切回來不會不見）
+  const work = {};
+  const items = () => work[$('pack').value] || (work[$('pack').value] = THEMES[$('pack').value].items.map(x => x.slice()));
+  const isCustom = () => $('pack').value === 'custom';
+  const themeName = () => isCustom() ? ($('customTheme').value.trim() || '自訂情境') : THEMES[$('pack').value].name;
+  const roundKey = r => (isCustom() ? 'custom:' + themeName() : $('pack').value) + r;
+  let round = 0;
+  const copied = new Set();
 
   function renderPhrases() {
     const box = $('phrases');
     box.innerHTML = '';
-    $('nineNote').hidden = count() !== 9;
-    PACKS[$('pack').value].slice(0, count()).forEach(([text, act], i) => {
+    $('customRow').hidden = !isCustom();
+    box.hidden = isCustom();
+    const list = isCustom() ? [] : items();
+    for (let i = 0; i < (isCustom() ? 0 : 9); i++) {
+      const idx = round * 9 + i;
       const row = document.createElement('div');
       row.className = 'phrase';
-      row.innerHTML = `<span>${i + 1}</span>
-        <input type="text" id="t${i}" aria-label="第 ${i + 1} 張的文字">
-        <input type="text" id="a${i}" aria-label="第 ${i + 1} 張的動作">`;
+      row.innerHTML = `<span>${idx + 1}</span>
+        <input type="text" id="t${i}" aria-label="第 ${idx + 1} 張的文字">
+        <input type="text" id="a${i}" aria-label="第 ${idx + 1} 張的動作">`;
       box.appendChild(row);
-      $('t' + i).value = text;
-      $('a' + i).value = act;
+      $('t' + i).value = list[idx][0];
+      $('a' + i).value = list[idx][1];
+      $('t' + i).addEventListener('input', e => { list[idx][0] = e.target.value; updatePrompts(); });
+      $('a' + i).addEventListener('input', e => { list[idx][1] = e.target.value; updatePrompts(); });
+    }
+    document.querySelectorAll('#rounds button').forEach(b => {
+      const r = +b.dataset.round;
+      b.setAttribute('aria-pressed', r === round);
+      b.classList.toggle('done', copied.has(roundKey(r)));
     });
-    box.querySelectorAll('input').forEach(inp => inp.addEventListener('input', updatePrompts));
+    $('nextRound').hidden = round === 3;
     updatePrompts();
   }
 
   function contentLines() {
     const noText = $('font').value === '不要放任何文字';
-    return Array.from({ length: count() }, (_, i) => {
+    if (isCustom()) {
+      const a = round * 9 + 1, b = a + 8;
+      return `用你列出的第 ${a}–${b} 句，依照順序排列` + (noText ? '（句子只當作表情和動作的主題，圖上不要寫字）' : '');
+    }
+    return Array.from({ length: 9 }, (_, i) => {
       const t = $('t' + i).value.trim(), a = $('a' + i).value.trim();
       return noText || !t ? `${i + 1}. ${a}` : `${i + 1}. 「${t}」— ${a}`;
     }).join('\n');
   }
 
   function layoutBlock() {
-    const size = count() === 9 ? '正方形 1024×1024，3 欄 × 3 列（九宮格），共 9 張貼圖' : '橫式 1536×1024，4 欄 × 2 列，共 8 張貼圖';
-    return `【版面】
-- ${size}
+    return `【畫風】
+- ${$('style').value}
+
+【版面】
+- 正方形 1024×1024，3 欄 × 3 列（九宮格），共 9 張貼圖
 - 每張貼圖大小一致、平均排列，彼此之間至少留 40px 空隙
 - 貼圖不可重疊、不可超出畫面邊緣
 - 不要格線、不要外框、不要編號
 
-【背景】
-- 整張背景是${$('bg').value}，不要漸層、陰影或花紋
+${bgBlock()}`;
+  }
+
+  // LINE 規定貼圖要透明背景的 PNG
+  function bgBlock() {
+    const bg = $('bg').value;
+    if (bg === 'transparent') return `【背景與檔案】
+- 輸出成去背的 PNG 檔，背景完全透明
+- 不要畫出灰白棋盤格來假裝透明
+- 如果無法輸出透明背景，就改用純淺灰色（#E6E6E6）單色背景，不要漸層或陰影
+- 每張貼圖有一圈白色描邊（貼紙感）`;
+    return `【背景與檔案】
+- 輸出成 PNG 檔
+- 整張背景是${bg}，不要漸層、陰影或花紋
 - 每張貼圖有一圈白色描邊（貼紙感）`;
   }
 
@@ -406,30 +551,54 @@
   }
 
   function updatePrompts() {
-    $('p2').textContent = `用剛剛定稿的角色（長相必須和角色設定圖完全一致），生成一張 LINE 貼圖排版圖：
-
-${layoutBlock()}
-
-【內容】（由左到右、由上到下）
-${contentLines()}
-
-${textBlock()}`;
-
-    $('p3').textContent = `這是我的 LINE 貼圖角色設定圖，請完全照這個角色的長相、服裝、畫風，生成一張貼圖排版圖：
-
-${layoutBlock()}
+    const name = themeName(), n = round + 1;
+    const body = `${layoutBlock()}
 
 【內容】（由左到右、由上到下）
 ${contentLines()}
 
 ${textBlock()}`;
+    let head, newChat;
+    if (isCustom()) {
+      head = round === 0
+        ? `用剛剛定稿的角色（長相必須和角色設定圖完全一致），製作「${name}」LINE 貼圖，總共 36 張，分 4 組、每組 9 張。\n\n請先幫我想 36 句適合「${name}」情境、聊天時實用的貼圖用語，每句 2–6 個字，各配一個表情或動作，編號 1–36 列出來。列完之後，直接畫第 1 組（第 1–9 句）：`
+        : `繼續畫「${name}」LINE 貼圖第 ${n} 組（共 4 組），用你剛剛列出的第 ${round * 9 + 1}–${round * 9 + 9} 句。角色的長相、服裝、畫風、版面、背景、文字風格都必須和第 1 組完全一樣：`;
+      newChat = `這是我的 LINE 貼圖角色設定圖，請完全照這個角色的長相、服裝、畫風，製作「${name}」貼圖第 ${n} 組（共 4 組，每組 9 張）。\n\n請先想 9 句適合「${name}」情境、聊天時實用的貼圖用語（每句 2–6 個字，各配一個表情或動作，不要和常見的早安晚安重複），列出來之後畫成九宮格：\n\n` + body.replace(/用你列出的第 \d+–\d+ 句/, '用你剛剛想的 9 句');
+    } else {
+      head = round === 0
+        ? `用剛剛定稿的角色（長相必須和角色設定圖完全一致），生成「${name}」LINE 貼圖第 1 組（共 4 組，每組 9 張）：`
+        : `繼續用同一個角色，生成「${name}」LINE 貼圖第 ${n} 組（共 4 組）。角色的長相、服裝、畫風、版面、背景、文字風格都必須和第 1 組完全一樣：`;
+      newChat = `這是我的 LINE 貼圖角色設定圖，請完全照這個角色的長相、服裝、畫風，生成「${name}」貼圖第 ${n} 組（共 4 組，每組 9 張）：\n\n` + body;
+    }
+    $('p2').textContent = head + '\n\n' + body;
+    $('p3').textContent = newChat;
+    $('p2Label').textContent = `第 ${n} 組・貼到同一個對話裡`;
+    $('p3Label').textContent = `第 ${n} 組・新對話用`;
   }
 
-  const count = () => Number($('layout').value);
-  $('layout').addEventListener('change', renderPhrases);
-  $('pack').addEventListener('change', renderPhrases);
+  document.querySelectorAll('#rounds button').forEach(b => b.addEventListener('click', () => { round = +b.dataset.round; renderPhrases(); }));
+  $('nextRound').addEventListener('click', () => {
+    if (round < 3) { round++; renderPhrases(); $('rounds').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
+  $('copyP2').addEventListener('click', () => {
+    copied.add(roundKey(round));
+    document.querySelector(`#rounds button[data-round="${round}"]`).classList.add('done');
+  });
+  $('pack').addEventListener('change', () => { round = 0; renderPhrases(); });
   $('bg').addEventListener('change', updatePrompts);
   $('font').addEventListener('change', updatePrompts);
+  $('customTheme').addEventListener('input', renderPhrases);
+  $('style').addEventListener('change', () => { setSource(source); updatePrompts(); });
+
+  // 🎲 隨機挑一個畫風和情境
+  $('randomBtn').addEventListener('click', () => {
+    const pick = sel => { const opts = [...sel.options].filter(o => o.value !== 'custom' && o.value !== sel.value); sel.value = opts[Math.floor(Math.random() * opts.length)].value; };
+    pick($('style'));
+    pick($('pack'));
+    round = 0;
+    setSource(source);
+    renderPhrases();
+  });
   renderPhrases();
 
   // ---------- 複製 ----------

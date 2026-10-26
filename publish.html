@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LINE 貼圖上架小幫手</title>
+  <script src="./mobile.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Noto Sans TC", "Segoe UI", "微軟正黑體", Arial, sans-serif;
+      background: #f0f4f8; margin: 0; padding: 0 20px 48px; color: #333;
+      display: flex; flex-direction: column; align-items: center;
+    }
+
+    /* 導航列（各頁共用樣式） */
+    nav { width: 100%; padding: 15px 0; margin-bottom: 10px; }
+    nav div { max-width: 900px; margin: 0 auto; display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+    nav a {
+      padding: 10px 18px; border: 2px solid #64b5f6; background: #e3f2fd; color: #01579b;
+      text-decoration: none; font-weight: bold; font-size: 16px; border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,.1); min-width: 120px; text-align: center;
+      transition: background-color .2s, box-shadow .2s;
+    }
+    nav a:hover { background: #bbdefb; box-shadow: 0 4px 8px rgba(0,0,0,.15); }
+    nav a[aria-current="page"] { background: #64b5f6; color: #fff; }
+
+    main { max-width: 900px; width: 100%; display: flex; flex-direction: column; gap: 20px; }
+    .card { background: #fff; border-radius: 14px; padding: 22px 24px; box-shadow: 0 2px 10px rgba(0,0,0,.06); min-width: 0; }
+    #title {
+      display: inline-block; background: linear-gradient(135deg, #e0f7fa, #fff9c4);
+      padding: 10px 18px; border-radius: 10px; font-size: 22px; margin: 0;
+      box-shadow: 1px 1px 5px rgba(0,0,0,.1);
+    }
+    h2 { margin: 0 0 4px; font-size: 19px; display: flex; align-items: center; gap: 10px; }
+    .no {
+      width: 30px; height: 30px; border-radius: 50%; background: #64b5f6; color: #fff; font-size: 15px;
+      display: inline-grid; place-items: center; flex: none;
+    }
+    .lead, .hint { color: #666; line-height: 1.7; margin: 8px 0 0; }
+    .hint { font-size: 14px; }
+
+    /* 欄位 */
+    .fields { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .field-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .field-head label { font-weight: bold; font-size: 15px; }
+    .field-head .tag { font-size: 12px; font-weight: normal; color: #fff; background: #ef6c00; border-radius: 4px; padding: 1px 6px; margin-left: 4px; }
+    .field-head .tag.opt { background: #90a4ae; }
+    .tools { display: flex; align-items: center; gap: 8px; }
+    .count { font-size: 13px; color: #666; font-variant-numeric: tabular-nums; }
+    .count.over { color: #d84315; font-weight: bold; }
+    input[type="text"], textarea, select {
+      font: inherit; font-size: 16px; color: #333; border: 1px solid #cfd8dc; border-radius: 8px;
+      padding: 9px 11px; width: 100%; background: #fff;
+    }
+    textarea { min-height: 96px; resize: vertical; line-height: 1.6; }
+    input.bad, textarea.bad { border-color: #ef6c00; background: #fff8f0; }
+    .warn { font-size: 13px; color: #d84315; min-height: 0; }
+    .warn:empty { display: none; }
+
+    .copy {
+      font: inherit; font-size: 13px; font-weight: bold; border: none; border-radius: 999px; cursor: pointer;
+      padding: 5px 14px; background: #64b5f6; color: #fff;
+    }
+    .copy:hover { background: #42a5f5; }
+    .copy.done { background: #4caf50; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid #42a5f5; outline-offset: 2px; }
+
+    .tpl { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 14px; padding: 12px 14px; background: #f5f9fd; border-radius: 10px; }
+    .tpl label { font-size: 13px; color: #666; display: flex; flex-direction: column; gap: 4px; }
+    .tpl select { width: auto; font-size: 15px; padding: 6px 10px; }
+    .btn {
+      font: inherit; font-size: 15px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer;
+      padding: 9px 18px; background: #64b5f6; color: #fff; text-decoration: none; display: inline-block;
+    }
+    .btn:hover { background: #42a5f5; }
+    .btn.gray { background: #e0e0e0; color: #333; }
+    .btn.gray:hover { background: #d5d5d5; }
+    .btn.green { background: #66bb6a; }
+    .btn.green:hover { background: #4caf50; }
+    .btn.big { font-size: 17px; padding: 12px 26px; }
+
+    /* 檢查清單 */
+    .checklist { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-direction: column; gap: 8px; }
+    .checklist label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; line-height: 1.6; padding: 8px 10px; border-radius: 8px; }
+    .checklist label:hover { background: #f5f9fd; }
+    .checklist input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: #4caf50; }
+    .checklist input:checked + span { color: #888; text-decoration: line-through; }
+    .progress { margin-top: 10px; font-weight: bold; color: #01579b; }
+
+    /* 上架步驟 */
+    .steps { margin: 14px 0 0; padding-left: 22px; line-height: 1.9; }
+    .steps b { color: #01579b; }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
+    footer { text-align: center; font-size: 13px; color: #888; }
+
+    @media (max-width: 640px) {
+      body { padding: 0 12px 24px; }
+      nav div { gap: 8px; }
+      nav a { min-width: unset; flex: 1 1 40%; padding: 8px 10px; font-size: 15px; }
+      .card { padding: 18px 16px; }
+      .row2 { grid-template-columns: 1fr; }
+      #title { font-size: 19px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div>
+      <a href="./index.html">🏠 主頁</a>
+      <a href="./sticker.html">✂️ 貼圖裁切</a>
+      <a href="./cropper.html">📑Main & Tab 切割</a>
+      <a href="./prompts.html">📝 GPT 指令集</a>
+      <a href="./publish.html" aria-current="page">🚀 上架小幫手</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="card">
+      <h1 id="title">🚀 LINE 貼圖上架小幫手</h1>
+      <p class="lead">先在這裡把上架要填的資料準備好，字數會自動檢查。到 LINE Creators Market 時，每一格按「複製」再貼上就好。填的內容會自動存在這台裝置上，下次打開還在。</p>
+    </section>
+
+    <!-- 1. 基本資料 -->
+    <section class="card">
+      <h2><span class="no">1</span>基本資料</h2>
+      <div class="fields">
+        <div class="row2">
+          <div class="field">
+            <div class="field-head">
+              <label for="creator">創作者名稱</label>
+              <div class="tools"><span class="count" data-for="creator"></span><button type="button" class="copy" data-copy="creator">複製</button></div>
+            </div>
+            <input type="text" id="creator" data-limit="50" placeholder="例：小美的貼圖屋">
+            <div class="warn" data-warn="creator"></div>
+          </div>
+          <div class="field">
+            <div class="field-head">
+              <label for="copyright">版權標示<span class="tag">只能英文數字</span></label>
+              <div class="tools"><span class="count" data-for="copyright"></span><button type="button" class="copy" data-copy="copyright">複製</button></div>
+            </div>
+            <input type="text" id="copyright" data-limit="50" data-ascii="1" placeholder="例：(C)2026 Mei">
+            <div class="warn" data-warn="copyright"></div>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:0">
+          <label class="hint" style="margin:0;display:flex;align-items:center;gap:8px">英文名字
+            <input type="text" id="enName" placeholder="例：Mei" style="width:160px;font-size:15px;padding:6px 9px">
+          </label>
+          <button type="button" class="btn gray" id="makeCopyright">產生版權標示</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 貼圖資訊 -->
+    <section class="card">
+      <h2><span class="no">2</span>貼圖名稱與說明</h2>
+      <p class="hint">LINE 規定英文資訊必填，中文是給台灣使用者看的。全形字（中文）算 2 個字，不能用表情符號。</p>
+
+      <div class="tpl">
+        <label>主題範本
+          <select id="tplTheme">
+            <option value="office">上班族</option>
+            <option value="daily">日常問候</option>
+            <option value="family">家人長輩</option>
+            <option value="couple">情侶</option>
+            <option value="service">服務業</option>
+          </select>
+        </label>
+        <button type="button" class="btn gray" id="applyTpl">套用範本到空白欄位</button>
+      </div>
+
+      <div class="fields">
+        <div class="row2">
+          <div class="field">
+            <div class="field-head">
+              <label for="titleZh">貼圖名稱（中文）<span class="tag opt">選填</span></label>
+              <div class="tools"><span class="count" data-for="titleZh"></span><button type="button" class="copy" data-copy="titleZh">複製</button></div>
+            </div>
+            <input type="text" id="titleZh" data-limit="40" placeholder="例：櫃檯小美的日常">
+            <div class="warn" data-warn="titleZh"></div>
+          </div>
+          <div class="field">
+            <div class="field-head">
+              <label for="titleEn">貼圖名稱（英文）<span class="tag">必填</span></label>
+              <div class="tools"><span class="count" data-for="titleEn"></span><button type="button" class="copy" data-copy="titleEn">複製</button></div>
+            </div>
+            <input type="text" id="titleEn" data-limit="40" data-ascii="1" placeholder="例：Mei at the Front Desk">
+            <div class="warn" data-warn="titleEn"></div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <div class="field-head">
+              <label for="descZh">貼圖說明（中文）<span class="tag opt">選填</span></label>
+              <div class="tools"><span class="count" data-for="descZh"></span><button type="button" class="copy" data-copy="descZh">複製</button></div>
+            </div>
+            <textarea id="descZh" data-limit="160" placeholder="例：飯店櫃檯小美的上班日常，招呼客人、加油打氣都好用！"></textarea>
+            <div class="warn" data-warn="descZh"></div>
+          </div>
+          <div class="field">
+            <div class="field-head">
+              <label for="descEn">貼圖說明（英文）<span class="tag">必填</span></label>
+              <div class="tools"><span class="count" data-for="descEn"></span><button type="button" class="copy" data-copy="descEn">複製</button></div>
+            </div>
+            <textarea id="descEn" data-limit="160" data-ascii="1" placeholder="例：Daily life of Mei at the hotel front desk. Perfect for greetings and cheering up!"></textarea>
+            <div class="warn" data-warn="descEn"></div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn green" id="copyAll">📋 複製全部資料</button>
+        <button type="button" class="btn gray" id="resetAll">清空全部</button>
+        <span class="hint" id="resetConfirm" style="margin:0" hidden>
+          確定要清空？ <button type="button" class="btn gray" id="resetYes" style="padding:5px 12px;font-size:14px">清空</button>
+          <button type="button" class="btn gray" id="resetNo" style="padding:5px 12px;font-size:14px">取消</button>
+        </span>
+      </div>
+    </section>
+
+    <!-- 3. 檢查清單 -->
+    <section class="card">
+      <h2><span class="no">3</span>上傳前檢查</h2>
+      <ul class="checklist" id="checklist">
+        <li><label><input type="checkbox" data-check="count"><span>貼圖張數是 <b>8 / 16 / 24 / 32 / 40</b> 其中一種，多的已經刪掉</span></label></li>
+        <li><label><input type="checkbox" data-check="zip"><span>用<a href="./sticker.html">貼圖裁切工具</a>下載的 ZIP，裡面有 <b>01.png…、main.png、tab.png</b>（沒有解壓再重新壓縮）</span></label></li>
+        <li><label><input type="checkbox" data-check="bg"><span>每張都是<b>透明背景</b>，圖案沒有被切到</span></label></li>
+        <li><label><input type="checkbox" data-check="text"><span>貼圖上的<b>文字沒有錯字</b></span></label></li>
+        <li><label><input type="checkbox" data-check="rights"><span>角色是自己的，或已取得照片中人物的同意（不是藝人、名人或別人的角色）</span></label></li>
+        <li><label><input type="checkbox" data-check="info"><span>上面的名稱、說明都沒有紅字警告</span></label></li>
+      </ul>
+      <div class="progress" id="progress"></div>
+    </section>
+
+    <!-- 4. 上架步驟 -->
+    <section class="card">
+      <h2><span class="no">4</span>到 LINE Creators Market 上架</h2>
+      <ol class="steps">
+        <li>登入 LINE Creators Market，按「<b>新增</b>」，選「<b>貼圖</b>」</li>
+        <li>在「顯示資訊」把上面的資料一格一格<b>複製、貼上</b>（語言選英文，再新增中文（繁體））</li>
+        <li>到「<b>貼圖圖片</b>」，選好張數，按「<b>編輯</b>」→「<b>上傳 ZIP 檔</b>」，選裁切工具下載的 ZIP</li>
+        <li>到「<b>販售資訊</b>」設定價格和販售地區</li>
+        <li>按「<b>申請審核</b>」送出，審核通常需要幾天</li>
+      </ol>
+      <div class="actions">
+        <a class="btn big" href="https://creator.line.me/my/" target="_blank" rel="noopener">前往 LINE Creators Market ↗</a>
+      </div>
+      <p class="hint">在手機上建議用 Chrome 或 Safari 開啟，LINE 內建瀏覽器無法上傳檔案。用電腦上傳最順。</p>
+    </section>
+
+    <footer>資料只存在你的瀏覽器裡，不會傳到任何地方</footer>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const FIELDS = ['creator', 'copyright', 'titleZh', 'titleEn', 'descZh', 'descEn'];
+    const LABELS = { creator: '創作者名稱', copyright: '版權標示', titleZh: '貼圖名稱（中文）', titleEn: '貼圖名稱（英文）', descZh: '貼圖說明（中文）', descEn: '貼圖說明（英文）' };
+    const STORE_KEY = 'line-sticker-publish';
+
+    // ---------- 存檔（只存在這台裝置的瀏覽器） ----------
+    function load() {
+      try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { return {}; }
+    }
+    function save() {
+      const data = { fields: {}, checks: {}, enName: $('enName').value };
+      FIELDS.forEach(id => data.fields[id] = $(id).value);
+      document.querySelectorAll('[data-check]').forEach(c => data.checks[c.dataset.check] = c.checked);
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) { /* 無痕模式等情況不能存，忽略 */ }
+    }
+
+    // ---------- 字數：半形算 1、全形算 2 ----------
+    const isWide = ch => /[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦]/.test(ch);
+    const lineLength = s => [...s].reduce((n, ch) => n + (isWide(ch) ? 2 : 1), 0);
+    const EMOJI = /\p{Extended_Pictographic}/u;
+
+    function check(id) {
+      const el = $(id), v = el.value, limit = +el.dataset.limit;
+      const len = lineLength(v);
+      const warns = [];
+      if (len > limit) warns.push(`超過 ${limit} 字（全形字算 2 個字），請刪減 ${len - limit} 字`);
+      if (EMOJI.test(v)) warns.push('LINE 不支援表情符號，請刪除');
+      if (el.dataset.ascii && /[^\x20-\x7E\n]/.test(v.replace(EMOJI, ''))) warns.push('這一格只能用英文、數字和半形符號');
+      const count = document.querySelector(`[data-for="${id}"]`);
+      count.textContent = `${len} / ${limit}`;
+      count.classList.toggle('over', len > limit);
+      document.querySelector(`[data-warn="${id}"]`).textContent = warns.join('；');
+      el.classList.toggle('bad', warns.length > 0);
+      return warns.length === 0;
+    }
+
+    // ---------- 範本 ----------
+    const TEMPLATES = {
+      office:  { zh: '上班族的日常貼圖！打招呼、回覆工作、加油打氣，辦公室聊天都好用。', en: 'Stickers for everyday office life. Perfect for greetings, work replies and cheering up your coworkers!' },
+      daily:   { zh: '每天都用得到的問候貼圖，早安、晚安、謝謝、好喔，一套全包！', en: 'Everyday greeting stickers for good morning, good night, thanks and more!' },
+      family:  { zh: '傳給家人長輩的溫暖問候，早安平安、注意身體，關心一次送到。', en: 'Warm greetings for your family. Say good morning and take care with a smile!' },
+      couple:  { zh: '情侶專用的甜蜜貼圖，想你、愛你、抱抱，傳給另一半剛剛好。', en: 'Sweet stickers for couples. Send love, hugs and miss-you messages to your special one!' },
+      service: { zh: '服務業的好幫手！歡迎光臨、請稍等、謝謝光臨，應對客人超方便。', en: 'Handy stickers for service staff. Welcome, please wait a moment, thank you and more!' }
+    };
+    $('applyTpl').addEventListener('click', () => {
+      const t = TEMPLATES[$('tplTheme').value];
+      let filled = 0;
+      if (!$('descZh').value.trim()) { $('descZh').value = t.zh; filled++; }
+      if (!$('descEn').value.trim()) { $('descEn').value = t.en; filled++; }
+      FIELDS.forEach(check);
+      save();
+      if (!filled) flash($('applyTpl'), '說明欄已經有內容，沒有覆蓋');
+    });
+
+    $('makeCopyright').addEventListener('click', () => {
+      const name = $('enName').value.trim();
+      if (!name) { $('enName').focus(); return flash($('makeCopyright'), '請先填英文名字'); }
+      $('copyright').value = `(C)${new Date().getFullYear()} ${name}`;
+      check('copyright');
+      save();
+    });
+
+    // ---------- 複製 ----------
+    function flash(btn, text) {
+      const old = btn.dataset.label || btn.textContent;
+      btn.dataset.label = old;
+      btn.textContent = text;
+      setTimeout(() => { btn.textContent = old; btn.classList.remove('done'); }, 1800);
+    }
+    async function copyText(text, btn, fallbackEl) {
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.classList.add('done');
+        flash(btn, '已複製 ✓');
+      } catch (e) {
+        if (fallbackEl) { fallbackEl.focus(); fallbackEl.select(); }
+        flash(btn, '已選取，請手動複製');
+      }
+    }
+    document.querySelectorAll('[data-copy]').forEach(btn => btn.addEventListener('click', () => {
+      const el = $(btn.dataset.copy);
+      if (!el.value.trim()) return flash(btn, '還沒填');
+      copyText(el.value, btn, el);
+    }));
+    $('copyAll').addEventListener('click', () => {
+      const text = FIELDS.map(id => `【${LABELS[id]}】\n${$(id).value.trim() || '（未填）'}`).join('\n\n');
+      copyText(text, $('copyAll'));
+    });
+
+    // ---------- 清空（頁面內確認，不用跳出視窗） ----------
+    $('resetAll').addEventListener('click', () => { $('resetConfirm').hidden = false; });
+    $('resetNo').addEventListener('click', () => { $('resetConfirm').hidden = true; });
+    $('resetYes').addEventListener('click', () => {
+      FIELDS.forEach(id => { $(id).value = ''; check(id); });
+      $('enName').value = '';
+      document.querySelectorAll('[data-check]').forEach(c => c.checked = false);
+      $('resetConfirm').hidden = true;
+      updateProgress();
+      save();
+    });
+
+    // ---------- 檢查清單 ----------
+    function updateProgress() {
+      const all = document.querySelectorAll('[data-check]');
+      const done = [...all].filter(c => c.checked).length;
+      $('progress').textContent = done === all.length ? '✅ 全部確認完成，可以上架了！' : `已確認 ${done} / ${all.length} 項`;
+    }
+
+    // ---------- 初始化 ----------
+    const saved = load();
+    FIELDS.forEach(id => {
+      if (saved.fields && saved.fields[id]) $(id).value = saved.fields[id];
+      $(id).addEventListener('input', () => { check(id); save(); });
+      check(id);
+    });
+    if (saved.enName) $('enName').value = saved.enName;
+    $('enName').addEventListener('input', save);
+    document.querySelectorAll('[data-check]').forEach(c => {
+      if (saved.checks && saved.checks[c.dataset.check]) c.checked = true;
+      c.addEventListener('change', () => { updateProgress(); save(); });
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

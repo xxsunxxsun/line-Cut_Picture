@@ -193,6 +193,7 @@
       <a href="./sticker.html" aria-current="page">✂️ 貼圖裁切</a>
       <a href="./cropper.html">📑Main & Tab 切割</a>
       <a href="./prompts.html">📝 GPT 指令集</a>
+      <a href="./publish.html">🚀 上架小幫手</a>
     </div>
   </nav>
 
@@ -228,12 +229,12 @@
       </div>
       <div class="checks">
         <label><input type="checkbox" id="optTrim" checked> 🎯 智慧置中（自動找圖案並置中）</label>
-        <label><input type="checkbox" id="optRemoveBg"> 🪄 背景去背（轉透明）</label>
-        <label>容許度 <input type="range" id="tolerance" min="5" max="120" value="40"> <span id="tolVal">40</span></label>
+        <label><input type="checkbox" id="optRemoveBg" checked> 🪄 背景去背（轉透明）</label>
+        <label>容許度 <input type="range" id="tolerance" min="3" max="120" value="15"> <span id="tolVal">15</span></label>
       </div>
       <div class="hint">
         智慧置中：每格裡自動偵測圖案範圍，等比縮放後置中，解決 AI 圖「圖案偏一邊」的問題；空白格會自動略過。<br>
-        背景去背：從邊緣往內把和背景相近的顏色變透明（適合純色背景）。容許度越高去得越多。
+        背景去背：LINE 貼圖必須是透明背景，建議保持開啟。會從邊緣往內把和背景相近的顏色變透明，貼圖內部的白色會保留。<br>容許度：淺灰、淺藍背景用 15（保留白色描邊）；綠幕可以調到 40；米白背景要降到 5。去不乾淨就調高，吃到圖案就調低。
       </div>
     </div>
 
@@ -293,6 +294,7 @@
       <button class="btn gray" id="clearBtn">🗑️ 全部清除</button>
       <button class="btn" id="shareBtn" hidden>📤 分享 / 存到相簿</button>
       <span id="zipMsg"></span>
+      <a href="./publish.html" id="nextStep" style="font-weight:bold;color:var(--blue-ink)" hidden>下一步：上架小幫手 →</a>
     </div>
     <div id="preview"></div>
     <div class="empty" id="previewEmpty">還沒有裁切結果</div>
@@ -972,6 +974,7 @@
         (n ? ` <small>${ok ? '✅ 符合 LINE 張數' : '（LINE 需 8/16/24/32/40 張）'}</small>` : '');
       $('previewEmpty').style.display = n ? 'none' : 'block';
       $('zipBtn').disabled = !n;
+      $('nextStep').hidden = !n;
       $('shareBtn').disabled = !n;
     }
 
